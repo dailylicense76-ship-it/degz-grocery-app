@@ -1,19 +1,19 @@
 {
   "name": "Degz Pulse Store",
   "short_name": "DegzPulse",
-  "start_url": "index.html",
+  "start_url": "cashier.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#00b894",
   "icons": [
     {
       "src": "./logo.png",
-      "sizes": "192x192",
+      "sizes": "1237x1237",
       "type": "image/png"
     },
     {
       "src": "./logo.png",
-      "sizes": "512x512",
+      "sizes": "1237x864",
       "type": "image/png"
     }
   ]
