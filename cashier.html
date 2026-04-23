@@ -6,7 +6,10 @@
     <meta name="theme-color" content="#0984e3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
     <title>Store Hub</title>
+    <link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
@@ -406,8 +409,11 @@
 
         window.addEventListener('storage', (e) => { if(e.key === 'dg_inv') { initApp(); } if(e.key === 'dg_ord' || e.key === 'dg_exp' || e.key === 'dg_settings') { checkOnlineOrders(); renderDashboard(); updateStoreBranding(); } });
         initApp(); setInterval(checkOnlineOrders, 3000); 
-
-        if ('serviceWorker' in navigator) { const swCode = `const CACHE_NAME = 'degz-pulse-offline-v1'; self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))); }); self.addEventListener('fetch', e => { if(e.request.url.includes('script.google.com')) return fetch(e.request); e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });`; const swURL = URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'})); navigator.serviceWorker.register(swURL).catch(()=>{}); }
-    </script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+    .then(() => console.log("✅ Offline App Ready"))
+    .catch(err => console.log("❌ App Install Error: ", err));
+}
+</script>
 </body>
 </html>
