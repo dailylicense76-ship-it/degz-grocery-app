@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Customer App</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        :root { --primary: #00b894; --dark: #1e272e; --light: #f1f2f6; --white: #ffffff; --gray: #a4b0be; --danger: #ff4757; --warning: #fdcb6e; --info: #0984e3; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { margin: 0; background-color: var(--light); color: var(--dark); height: 100vh; overflow-x: hidden;}
+
+        /* ☁️ CLOUD INDICATOR */
+        .cloud-status { background: #0984e3; color: white; text-align: center; font-size: 10px; font-weight: 800; padding: 3px; letter-spacing: 1px; }
+
+        #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; background: linear-gradient(135deg, var(--dark), #2d3436); padding: 20px; z-index: 2000; position: relative;}
+        .auth-box { background: var(--white); padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+        .auth-logo { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 5px; }
+        .auth-subtitle { color: var(--gray); font-size: 13px; margin-bottom: 25px; }
+        .auth-input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #dfe4ea; border-radius: 8px; font-size: 14px; outline: none; background: var(--light);}
+        .auth-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: 800; cursor: pointer; letter-spacing: 1px; transition: 0.2s; margin-top: 5px;}
+        .auth-switch { margin-top: 15px; font-size: 12px; color: var(--gray); cursor: pointer; font-weight: 600; }
+        .auth-switch span { color: var(--primary); }
+        .dev-reset { color: var(--danger); font-size: 10px; font-weight: 800; margin-top: 20px; cursor: pointer; letter-spacing: 1px; text-decoration: underline;}
+
+        #main-app { display: none; padding-bottom: 80px; min-height: 100vh; }
+        .header { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        .app-brand { font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px;}
+        .user-greeting { font-size: 14px; font-weight: 800; color: var(--dark); display: flex; flex-direction: column;}
+        .profile-link { font-size: 11px; color: var(--primary); font-weight: 800; cursor: pointer; margin-top: 2px;}
+        .header-icons { display: flex; gap: 15px; align-items: center;}
+        .cart-icon { position: relative; font-size: 24px; cursor: pointer; }
+        .cart-badge { position: absolute; top: -5px; right: -8px; background: var(--danger); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+        .hero { padding: 15px 20px; background: linear-gradient(135deg, var(--primary), #00cec9); color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
+        .search-bar { width: 100%; padding: 10px 15px; border-radius: 8px; border: none; font-size: 14px; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px;}
+
+        .categories { display: flex; gap: 8px; padding: 15px 20px; overflow-x: auto; scrollbar-width: none; }
+        .categories::-webkit-scrollbar { display: none; }
+        .cat-btn { padding: 6px 14px; background: var(--white); border: 1px solid #dfe4ea; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.3s; }
+        .cat-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
+
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 0 15px; }
+        .product-card { background: var(--white); border-radius: 10px; padding: 12px 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;}
+        .p-icon { font-size: 35px; margin-bottom: 5px; }
+        .p-name { font-size: 11px; font-weight: 600; margin-bottom: 5px; color: var(--dark); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .p-price { font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
+        .add-btn { width: 100%; background: var(--light); color: var(--dark); border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .add-btn:hover { background: var(--primary); color: white; }
+        .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--gray); font-weight: 600; background: var(--white); border-radius: 12px; border: 2px dashed #dfe4ea;}
+        
+        .profile-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: var(--white); border-radius: 15px; z-index: 1001; padding: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .profile-modal.open { display: block; }
+        .modal-title { font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--light); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between;}
+        .btn-logout { background: var(--danger); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; font-weight: bold; margin-top: 10px;}
+
+        .cart-drawer { position: fixed; top: 0; right: -100%; width: 100%; max-width: 400px; height: 100vh; background: var(--white); z-index: 1000; transition: 0.4s ease-in-out; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
+        .cart-drawer.open { right: 0; }
+        .cart-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--light); font-weight: 800; font-size: 16px; }
+        .close-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray); }
+        .cart-items { flex: 1; overflow-y: auto; padding: 15px; }
+        .c-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed var(--light); padding-bottom: 10px; }
+        .c-info { display: flex; align-items: center; gap: 8px; }
+        .c-qty-controls { display: flex; align-items: center; gap: 8px; background: var(--light); padding: 5px 8px; border-radius: 6px; font-weight: bold; font-size: 12px;}
+        .qty-btn { border: none; background: none; font-size: 14px; font-weight: bold; cursor: pointer; color: var(--primary);}
+        
+        .cart-footer { padding: 15px; border-top: 1px solid var(--light); background: var(--white); }
+        .delivery-info { background: var(--light); padding: 10px; border-radius: 8px; font-size: 10px; color: var(--dark); margin-bottom: 10px; line-height: 1.4;}
+        .delivery-info span { color: var(--primary); font-weight: 800; }
+        .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px; }
+        .checkout-btn { width: 100%; background: var(--dark); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; }
+
+        .promo-box { display: flex; gap: 5px; margin-bottom: 10px; }
+        .promo-input { flex: 1; padding: 8px; border: 1px solid #dfe4ea; border-radius: 6px; font-size: 12px; outline: none; text-transform: uppercase;}
+        .promo-btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;}
+        .discount-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--danger); font-weight: 800; margin-bottom: 10px; display: none;}
+        
+        .payment-box { background: var(--light); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
+        .payment-label { font-size: 10px; font-weight: 800; color: var(--gray); margin-bottom: 5px; display: block;}
+        .payment-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #dfe4ea; font-size: 12px; margin-bottom: 5px;}
+        .payment-ref { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #dfe4ea; font-size: 12px; display: none; margin-top: 5px;}
+        .ewallet-instructions { display: none; background: #e8f4f8; padding: 10px; border-radius: 6px; border-left: 3px solid var(--info); font-size: 11px; margin-bottom: 5px; line-height: 1.4; color: var(--dark);}
+        .ewallet-instructions b { color: var(--info); }
+
+        .track-card { background: var(--white); border: 2px solid var(--light); border-radius: 10px; padding: 15px; margin-bottom: 15px;}
+        .track-card.history { border-color: #eee; opacity: 0.8; }
+        .track-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px;}
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase;}
+        .status-badge.PENDING { background: var(--gray); }
+        .status-badge.PROCESSING { background: var(--warning); color: var(--dark); }
+        .status-badge.ONTHEWAY { background: var(--info); }
+        .status-badge.DELIVERED { background: var(--success); }
+        .history-title { font-size: 14px; font-weight: 800; margin: 20px 0 10px 0; border-bottom: 2px solid var(--light); padding-bottom: 5px;}
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
+        .overlay.open { display: block; }
+        .degz-copyright { text-align: center; font-size: 11px; color: var(--gray); padding: 20px; font-weight: 600; letter-spacing: 0.5px; }
+        .degz-copyright span { color: var(--primary); font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <div class="cloud-status">☁️ CLOUD SYNC ACTIVE</div>
+
+    <div id="auth-screen">
+        <div class="auth-box">
+            <div class="auth-logo" id="auth-brand">🛒 Store Name</div>
+            <div class="auth-subtitle">Log in to view our products.</div>
+            
+            <div id="login-form">
+                <input type="text" id="log-phone" class="auth-input" placeholder="Mobile Number (e.g. 09123456789)">
+                <input type="password" id="log-pass" class="auth-input" placeholder="Password / PIN">
+                <button class="auth-btn" onclick="login()">LOG IN</button>
+                <div class="auth-switch" onclick="toggleAuth('register')">New customer? <span>Create an account</span></div>
+            </div>
+
+            <div id="register-form" style="display: none;">
+                <input type="text" id="reg-name" class="auth-input" placeholder="Buong Pangalan (Full Name)">
+                <input type="text" id="reg-phone" class="auth-input" placeholder="Mobile Number">
+                <input type="password" id="reg-pass" class="auth-input" placeholder="Create Password">
+                <hr style="border: 0; border-top: 1px dashed #dfe4ea; margin: 15px 0;">
+                <div style="font-size: 11px; color: var(--gray); text-align: left; margin-bottom: 5px; font-weight: 600;">DELIVERY DETAILS:</div>
+                <input type="text" id="reg-storename" class="auth-input" placeholder="Pangalan ng Tindahan (Optional)">
+                <input type="text" id="reg-address" class="auth-input" placeholder="Kumpletong Address (Brgy, Street, City)">
+                <input type="text" id="reg-landmark" class="auth-input" placeholder="Landmark (Kalapit na kilalang lugar)">
+                <button class="auth-btn" style="background: var(--dark);" onclick="register()">REGISTER ACCOUNT</button>
+                <div class="auth-switch" onclick="toggleAuth('login')">Already have an account? <span>Log in here</span></div>
+            </div>
+        </div>
+        <div class="dev-reset" onclick="hardReset()">[ ⚠️ DEV: CLEAR LOCAL DATABASE ⚠️ ]</div>
+        <div class="degz-copyright">⚙️ System Engine by <span>Degz Enterprise</span><br>© 2026 All Rights Reserved. Licensed Software.</div>
+    </div>
+
+    <div id="main-app">
+        <div class="header">
+            <div class="app-brand" id="app-brand">🛒 Store Name</div>
+            <div class="header-icons">
+                <div class="user-greeting" style="align-items:flex-end;">
+                    <div id="user-display-name">Loading...</div>
+                    <span class="profile-link" onclick="toggleProfile()">⚙️ My Profile</span>
+                </div>
+                <div class="cart-icon" onclick="toggleTracker()">📦<span class="cart-badge" style="background:var(--info);" id="track-count">0</span></div>
+                <div class="cart-icon" onclick="toggleCart()">🛍️<span class="cart-badge" id="cart-count">0</span></div>
+            </div>
+        </div>
+
+        <div class="hero">
+            <h2 style="margin:0; font-size:16px;">What do you need today?</h2>
+            <input type="text" class="search-bar" id="searchInput" placeholder="Search products..." onkeyup="filterProducts()">
+        </div>
+        <div class="categories" id="category-list"></div>
+        <div class="product-grid" id="product-list"></div>
+        <div class="degz-copyright">⚙️ System Engine by <span>Degz Enterprise</span><br>© 2026 All Rights Reserved. Licensed Software.</div>
+    </div>
+
+    <div class="profile-modal" id="profileModal">
+        <div class="modal-title"><span>⚙️ Edit Profile</span><button class="close-btn" onclick="toggleProfile()">✖</button></div>
+        <div style="font-size: 11px; color: var(--gray); margin-bottom: 10px;">Update your delivery details below.</div>
+        <input type="text" id="edit-name" class="auth-input" placeholder="Full Name">
+        <input type="text" id="edit-phone" class="auth-input" placeholder="Mobile Number" disabled style="background:#eee;">
+        <input type="text" id="edit-storename" class="auth-input" placeholder="Store Name">
+        <input type="text" id="edit-address" class="auth-input" placeholder="Complete Address">
+        <input type="text" id="edit-landmark" class="auth-input" placeholder="Landmark">
+        <button class="auth-btn" onclick="saveProfile()">💾 SAVE CHANGES</button>
+        <button class="btn-logout" onclick="logout()">LOG OUT</button>
+    </div>
+
+    <div class="overlay" id="overlay" onclick="closeAll()"></div>
+    <div class="cart-drawer" id="cartDrawer">
+        <div class="cart-header"><span>Your Basket</span><button class="close-btn" onclick="toggleCart()">✖</button></div>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-footer" id="cartFooter">
+            <div class="promo-box"><input type="text" id="promo-input" class="promo-input" placeholder="Enter Promo Code (e.g. DEGZ10)"><button class="promo-btn" onclick="applyPromo()">APPLY</button></div>
+            <div class="discount-row" id="discount-row"><span>Discount Applied:</span><span>-₱<span id="discount-amount">0.00</span></span></div>
+            <div class="payment-box">
+                <span class="payment-label">MODE OF PAYMENT:</span>
+                <select id="payment-method" class="payment-select" onchange="togglePaymentRef()"><option value="COD">Cash on Delivery (COD)</option><option value="GCASH">GCash</option><option value="MAYA">PayMaya</option></select>
+                <div id="payment-instructions" class="ewallet-instructions"></div>
+                <input type="text" id="payment-ref" class="payment-ref" placeholder="Enter e-Wallet Reference Number">
+            </div>
+            <div class="delivery-info">📍 <span>DELIVER TO:</span><br><b id="chk-store" style="display:block; margin-top:3px;"></b><span id="chk-address" style="color:var(--dark); font-weight:normal;"></span><br></div>
+            <div class="total-row"><span>Total Due:</span><span style="color: var(--primary)">₱<span id="cartTotal">0.00</span></span></div>
+            <button class="checkout-btn" onclick="submitOrder()">CONFIRM ORDER 🚀</button>
+        </div>
+    </div>
+
+    <div class="cart-drawer" id="trackerDrawer">
+        <div class="cart-header"><span>My Orders</span><button class="close-btn" onclick="toggleTracker()">✖</button></div>
+        <div class="cart-items" id="trackerItems"></div>
+    </div>
+
+    <script>
+        // ☁️ CLOUD SYNC ENGINE CONSTANTS
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbwTMK_DCtNzHYGjn3Pkconli62fbjU8z9wADSfeuSDS8reG-VDaumBcIa_qg1-NN7FK/exec";
+
+        function syncToCloud() {
+            let payload = {
+                inv: JSON.parse(localStorage.getItem('dg_inv') || '[]'),
+                ord: JSON.parse(localStorage.getItem('dg_ord') || '[]'),
+                users: JSON.parse(localStorage.getItem('degz_users') || '[]')
+            };
+            fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify({ action: "SYNC_UP", payload: payload }) })
+            .catch(err => console.log("Cloud Sync Error:", err));
+        }
+
+        function syncFromCloud() {
+            fetch(CLOUD_URL).then(res => res.json()).then(data => {
+                let currentInv = localStorage.getItem('dg_inv');
+                let currentOrd = localStorage.getItem('dg_ord');
+                let currentSet = localStorage.getItem('dg_settings');
+                
+                if(data.inv) localStorage.setItem('dg_inv', JSON.stringify(data.inv));
+                if(data.ord) localStorage.setItem('dg_ord', JSON.stringify(data.ord));
+                if(data.settings) localStorage.setItem('dg_settings', JSON.stringify(data.settings));
+                if(data.users) localStorage.setItem('degz_users', JSON.stringify(data.users));
+
+                // Intelligent UI Refresh without disrupting typing
+                if(currentInv !== JSON.stringify(data.inv)) { inventory = data.inv; renderProducts(); }
+                if(currentOrd !== JSON.stringify(data.ord)) { checkMyOrders(); }
+                if(currentSet !== JSON.stringify(data.settings)) { updateStoreBranding(); togglePaymentRef(); }
+            }).catch(err => console.log("Cloud Load Error:", err));
+        }
+
+        // Start Cloud Listener
+        setInterval(syncFromCloud, 4000); 
+
+        let currentUser = null;
+
+        function hardReset() { if(confirm("Tatanggalin nito lahat ng data. Sigurado ka?")) { localStorage.clear(); alert("✅ Format Complete!"); location.reload(); } }
+
+        function checkAuth() {
+            let session = localStorage.getItem('degz_session');
+            if(session) { currentUser = JSON.parse(session); document.getElementById('auth-screen').style.display = 'none'; document.getElementById('main-app').style.display = 'block'; document.getElementById('user-display-name').innerText = currentUser.name; updateCheckoutDetails(); initApp(); } 
+            else { document.getElementById('auth-screen').style.display = 'flex'; document.getElementById('main-app').style.display = 'none'; syncFromCloud(); }
+        }
+
+        function updateCheckoutDetails() { document.getElementById('chk-store').innerText = currentUser.storeName ? `Store: ${currentUser.storeName}` : `Name: ${currentUser.name}`; document.getElementById('chk-address').innerText = currentUser.address; }
+        function updateStoreBranding() { let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); let storeName = settings.storeName || 'Degz Pulse Shop'; document.getElementById('app-brand').innerText = `🛒 ${storeName}`; document.getElementById('auth-brand').innerText = `🛒 ${storeName}`; document.title = storeName; }
+        function toggleAuth(type) { document.getElementById('login-form').style.display = type === 'login' ? 'block' : 'none'; document.getElementById('register-form').style.display = type === 'register' ? 'block' : 'none'; }
+
+        function register() {
+            let name = document.getElementById('reg-name').value.trim(); let phone = document.getElementById('reg-phone').value.trim(); let pass = document.getElementById('reg-pass').value.trim(); let storeName = document.getElementById('reg-storename').value.trim(); let address = document.getElementById('reg-address').value.trim(); let landmark = document.getElementById('reg-landmark').value.trim();
+            if(!name || !phone || !address || !landmark || !pass) return alert("Paki-kumpleto ang mga detalye.");
+            let usersDB = JSON.parse(localStorage.getItem('degz_users') || '[]'); if(usersDB.find(u => u.phone === phone)) return alert("Mobile number already registered!");
+            let newUser = { id: "CUST-" + Date.now(), name, phone, password: pass, storeName, address, landmark }; usersDB.push(newUser); 
+            localStorage.setItem('degz_users', JSON.stringify(usersDB)); localStorage.setItem('degz_session', JSON.stringify(newUser)); 
+            syncToCloud(); checkAuth();
+        }
+
+        function login() { let phone = document.getElementById('log-phone').value; let pass = document.getElementById('log-pass').value; let usersDB = JSON.parse(localStorage.getItem('degz_users') || '[]'); let user = usersDB.find(u => u.phone === phone && u.password === pass); if(user) { localStorage.setItem('degz_session', JSON.stringify(user)); checkAuth(); } else { alert("Invalid Mobile Number or Password."); } }
+        function toggleProfile() { let modal = document.getElementById('profileModal'); let overlay = document.getElementById('overlay'); if(!modal.classList.contains('open')) { document.getElementById('edit-name').value = currentUser.name; document.getElementById('edit-phone').value = currentUser.phone; document.getElementById('edit-storename').value = currentUser.storeName; document.getElementById('edit-address').value = currentUser.address; document.getElementById('edit-landmark').value = currentUser.landmark; } modal.classList.toggle('open'); overlay.classList.toggle('open'); }
+        function saveProfile() { let newName = document.getElementById('edit-name').value; let newStore = document.getElementById('edit-storename').value; let newAddress = document.getElementById('edit-address').value; let newLandmark = document.getElementById('edit-landmark').value; if(!newName || !newAddress) return alert("Pangalan at Address ay required!"); currentUser.name = newName; currentUser.storeName = newStore; currentUser.address = newAddress; currentUser.landmark = newLandmark; let usersDB = JSON.parse(localStorage.getItem('degz_users') || '[]'); let index = usersDB.findIndex(u => u.id === currentUser.id); if(index !== -1) { usersDB[index] = currentUser; } localStorage.setItem('degz_users', JSON.stringify(usersDB)); localStorage.setItem('degz_session', JSON.stringify(currentUser)); document.getElementById('user-display-name').innerText = currentUser.name; updateCheckoutDetails(); toggleProfile(); syncToCloud(); alert("✅ Profile Updated!"); }
+        function logout() { localStorage.removeItem('degz_session'); location.reload(); }
+
+        let inventory = []; let categories = ["All"]; let cart = []; let activeCategory = "All"; let currentDiscount = 0; 
+
+        function initApp() { updateStoreBranding(); inventory = JSON.parse(localStorage.getItem('dg_inv') || '[]'); if(inventory.length > 0) { let uniqueCats = [...new Set(inventory.map(i => i.cat ? i.cat : 'Others'))]; categories = ["All", ...uniqueCats]; } else { categories = []; } renderCategories(); renderProducts(); checkMyOrders(); }
+        function renderCategories() { let html = ''; categories.forEach(cat => { let isActive = cat === activeCategory ? 'active' : ''; html += `<button class="cat-btn ${isActive}" onclick="setCategory('${cat}')">${cat}</button>`; }); document.getElementById('category-list').innerHTML = html; }
+        function setCategory(cat) { activeCategory = cat; renderCategories(); renderProducts(); }
+        function filterProducts() { renderProducts(document.getElementById('searchInput').value); }
+
+        function renderProducts(searchQuery = '') {
+            let html = '';
+            if(inventory.length === 0) { html = `<div class="empty-state"><i>📦</i>Wala pang paninda.<br>Hinihintay pa ang Admin.</div>`; } 
+            else {
+                let filtered = inventory.filter(p => { let safeCat = p.cat ? p.cat : 'Others'; let matchCat = activeCategory === "All" || safeCat === activeCategory; let matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()); return matchCat && matchSearch; });
+                if(filtered.length === 0) { html = `<div class="empty-state">No products found.</div>`; } 
+                else { filtered.forEach(p => { html += `<div class="product-card"><div><div class="p-icon">${p.icon || '🛍️'}</div><div class="p-name">${p.name}</div></div><div><div class="p-price">₱${Number(p.price).toFixed(2)}</div><button class="add-btn" onclick="addToCart('${p.id}')">+ ADD</button></div></div>`; }); }
+            }
+            document.getElementById('product-list').innerHTML = html;
+        }
+
+        function addToCart(id) { let item = inventory.find(i => String(i.id) === String(id)); if(!item || item.stock <= 0) return alert("Out of stock!"); let existing = cart.find(i => String(i.id) === String(id)); if(existing) { if(existing.qty >= item.stock) return alert("Max stock reached!"); existing.qty++; } else { cart.push({ ...item, qty: 1 }); } updateCartUI(); }
+        function updateQty(id, change) { let cartItem = cart.find(i => String(i.id) === String(id)); let invItem = inventory.find(i => String(i.id) === String(id)); if(cartItem) { if(change > 0 && cartItem.qty >= invItem.stock) return alert("Max stock reached!"); cartItem.qty += change; if(cartItem.qty <= 0) cart = cart.filter(i => String(i.id) !== String(id)); updateCartUI(); } }
+
+        function updateCartUI() {
+            let count = cart.reduce((sum, item) => sum + item.qty, 0); document.getElementById('cart-count').innerText = count; let html = ''; let subTotal = 0;
+            if(cart.length === 0) { html = `<div style="text-align:center; margin-top:50px; color:#a4b0be;">Your basket is empty.</div>`; document.getElementById('cartFooter').style.display = 'none'; currentDiscount = 0; document.getElementById('promo-input').value = ''; } 
+            else { document.getElementById('cartFooter').style.display = 'block'; cart.forEach(item => { subTotal += item.price * item.qty; html += `<div class="c-item"><div class="c-info"><span style="font-size:20px">${item.icon || '🛍️'}</span><div><div style="font-size:12px; font-weight:600">${item.name}</div><div style="color:var(--primary); font-weight:800; font-size:12px;">₱${Number(item.price).toFixed(2)}</div></div></div><div class="c-qty-controls"><button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button></div></div>`; }); }
+            document.getElementById('cartItems').innerHTML = html; let finalTotal = subTotal - currentDiscount; if(finalTotal < 0) finalTotal = 0;
+            document.getElementById('cartTotal').innerText = finalTotal.toFixed(2); document.getElementById('discount-amount').innerText = currentDiscount.toFixed(2); document.getElementById('discount-row').style.display = currentDiscount > 0 ? 'flex' : 'none';
+        }
+
+        function applyPromo() { let code = document.getElementById('promo-input').value.toUpperCase(); let subTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0); if(subTotal === 0) return alert("Maglagay muna ng items sa cart."); if(code === "DEGZ10") { currentDiscount = subTotal * 0.10; alert("🎉 DEGZ10 Applied! You got 10% OFF."); } else if (code === "FREE50") { currentDiscount = 50; alert("🎉 FREE50 Applied! ₱50 has been deducted."); } else { currentDiscount = 0; alert("❌ Invalid Promo Code."); } updateCartUI(); }
+
+        function togglePaymentRef() {
+            let method = document.getElementById('payment-method').value; let refInput = document.getElementById('payment-ref'); let instructions = document.getElementById('payment-instructions'); let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}');
+            if(method === "COD") { refInput.style.display = "none"; refInput.value = ""; instructions.style.display = "none"; } 
+            else { refInput.style.display = "block"; instructions.style.display = "block"; if(method === "GCASH") { let name = settings.gcashName || 'Not Set'; let num = settings.gcashNum || 'Not Set'; instructions.innerHTML = `<b>GCash payment to:</b><br/>Name: ${name}<br/>Number: ${num}`; } else if (method === "MAYA") { let name = settings.mayaName || 'Not Set'; let num = settings.mayaNum || 'Not Set'; instructions.innerHTML = `<b>PayMaya payment to:</b><br/>Name: ${name}<br/>Number: ${num}`; } }
+        }
+
+        function toggleCart() { document.getElementById('trackerDrawer').classList.remove('open'); document.getElementById('cartDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
+
+        function submitOrder() {
+            if(cart.length === 0) return; let canCheckout = true; cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(!dbItem || dbItem.stock < cItem.qty) canCheckout = false; }); if(!canCheckout) return alert("Some items are out of stock. Please check basket.");
+            let method = document.getElementById('payment-method').value; let refNo = document.getElementById('payment-ref').value; if(method !== "COD" && refNo.trim() === "") return alert("Please enter your e-Wallet Reference Number.");
+            let finalTotal = document.getElementById('cartTotal').innerText;
+            let orderPayload = { orderId: "ORD-" + Math.floor(Math.random() * 9999), customerId: currentUser.id, customerName: currentUser.name, customerPhone: currentUser.phone, storeName: currentUser.storeName, location: currentUser.address, landmark: currentUser.landmark, totalAmount: finalTotal, discount: currentDiscount, paymentMethod: method, paymentRef: refNo, items: cart, status: "PENDING", timestamp: new Date().toISOString() };
+            
+            cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory));
+            let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); existingOrders.push(orderPayload); localStorage.setItem('dg_ord', JSON.stringify(existingOrders));
+            
+            cart = []; currentDiscount = 0; document.getElementById('promo-input').value = ''; document.getElementById('payment-method').value = "COD"; togglePaymentRef(); updateCartUI(); closeAll(); initApp(); 
+            
+            syncToCloud(); // 🔥 PUSH TO CLOUD INSTANTLY
+            alert(`✅ Order Sent!\nMode of Payment: ${method}\nTotal: ₱${finalTotal}`);
+        }
+
+        function checkMyOrders() {
+            if(!currentUser) return; let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let myOrders = orders.filter(o => o.customerId === currentUser.id).reverse(); let activeOrders = myOrders.filter(o => o.status !== "DELIVERED"); let pastOrders = myOrders.filter(o => o.status === "DELIVERED"); document.getElementById('track-count').innerText = activeOrders.length; let html = '';
+            if(activeOrders.length > 0) { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); let displayMsg = "Awaiting store confirmation."; if(o.status === "PROCESSING") displayMsg = "Your items are being packed."; if(o.status === "ON THE WAY") displayMsg = "🛵 Rider is on the way to your location!"; html += `<div class="track-card"><div class="track-head"><span style="color:var(--primary)">${o.orderId}</span><span class="status-badge ${badgeClass}">${o.status}</span></div><div style="font-size:11px; margin-bottom:5px; color:#555;">${displayMsg}</div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleString()}</div><div style="font-size:10px; margin-top:5px; border-top:1px dashed #eee; padding-top:5px;">Payment: <b style="color:var(--dark)">${o.paymentMethod || 'COD'}</b></div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px;">TOTAL: ₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); } else { html += `<div style="text-align:center; color:#a4b0be; margin-bottom: 20px;">No active orders right now.</div>`; }
+            if(pastOrders.length > 0) { html += `<div class="history-title">🕰️ Order History</div>`; pastOrders.forEach(o => { let itemsPreview = o.items.map(i => i.name).join(', '); if(itemsPreview.length > 30) itemsPreview = itemsPreview.substring(0, 30) + "..."; html += `<div class="track-card history"><div class="track-head"><span style="color:var(--gray)">${o.orderId}</span><span class="status-badge DELIVERED">DELIVERED</span></div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleDateString()}</div><div style="font-size:11px; color:#555; margin-top:5px;">${itemsPreview}</div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px; color:var(--gray)">₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); }
+            document.getElementById('trackerItems').innerHTML = html;
+        }
+
+        function toggleTracker() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('trackerDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
+        function closeAll() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('trackerDrawer').classList.remove('open'); document.getElementById('profileModal').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
+
+        window.addEventListener('storage', (e) => { if(e.key === 'dg_inv') initApp(); if(e.key === 'dg_ord') checkMyOrders(); if(e.key === 'dg_settings') { updateStoreBranding(); togglePaymentRef(); } });
+        checkAuth();
+    </script>
+</body>
+</html>

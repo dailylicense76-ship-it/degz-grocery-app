@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Hub</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        :root { --primary: #0984e3; --dark: #2d3436; --light: #f5f6fa; --white: #ffffff; --success: #00b894; --danger: #d63031; --gray: #a4b0be; --warning: #fdcb6e; }
+        * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { margin: 0; background-color: var(--light); color: var(--dark); height: 100vh; overflow: hidden; display: flex; flex-direction: column;}
+
+        /* ☁️ CLOUD INDICATOR */
+        .cloud-status { background: #00b894; color: white; text-align: center; font-size: 10px; font-weight: 800; padding: 3px; letter-spacing: 1px; }
+
+        .top-nav { background: var(--dark); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100;}
+        .brand { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: 1px;}
+        .nav-tabs { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;}
+        .nav-tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { background: #636e72; color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 8px; font-size:12px; white-space: nowrap;}
+        .tab-btn.active { background: var(--primary); }
+        .tab-btn.alert { animation: flashRed 1s infinite; }
+        .badge { background: var(--danger); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+
+        @keyframes flashRed { 0% { background: var(--danger); } 50% { background: #636e72; } 100% { background: var(--danger); } }
+
+        .workspace { display: flex; flex: 1; overflow: hidden; }
+        .view-panel { display: none; width: 100%; height: 100%; }
+        .view-panel.active { display: flex; }
+
+        /* VIEW 1: POS */
+        .left-panel { flex: 2; display: flex; flex-direction: column; background: var(--light); border-right: 2px solid #dfe4ea; }
+        .header { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 10;}
+        .header-buttons { display: flex; gap: 10px; }
+        .btn-shift { background: #fdcb6e; color: #2d3436; border: none; padding: 8px 15px; border-radius: 6px; font-weight: 800; cursor: pointer; font-size: 12px;}
+
+        .controls { padding: 15px; background: var(--white); display: flex; gap: 10px; border-bottom: 1px solid #dfe4ea;}
+        .search-bar { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #dfe4ea; font-size: 14px; outline: none; background: #f1f2f6;}
+        .btn-scan { background: var(--dark); color: white; border: none; padding: 0 20px; border-radius: 8px; font-weight: 800; cursor: pointer;}
+        
+        #pos-reader-container, #inv-reader-container { display: none; padding: 20px; background: #000; color: white; text-align: center; border-radius: 12px; margin-bottom: 20px;}
+        #pos-reader, #inv-reader { width: 100%; max-width: 400px; margin: 0 auto; }
+        .close-scanner { background: var(--danger); color: white; border: none; padding: 8px 15px; margin-top: 10px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+
+        .product-grid { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; align-content: start;}
+        .p-card { background: var(--white); border-radius: 10px; padding: 15px 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; border: 2px solid transparent;}
+        .p-card:active { transform: scale(0.95); border-color: var(--primary); }
+        .p-card.no-stock { opacity: 0.5; pointer-events: none; }
+        .p-icon { font-size: 30px; margin-bottom: 5px; }
+        .p-name { font-size: 11px; font-weight: 600; margin-bottom: 5px; color: var(--dark); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+        .p-price { font-size: 14px; font-weight: 800; color: var(--primary); }
+        .p-stock { font-size: 10px; color: var(--gray); margin-top: 5px; font-weight: bold;}
+
+        .right-panel { flex: 1; min-width: 350px; background: var(--white); display: flex; flex-direction: column; }
+        .cart-tabs { display: flex; background: var(--dark); padding: 10px 10px 0 10px; overflow-x: auto;}
+        .tab { padding: 10px 15px; background: #636e72; color: white; border-radius: 8px 8px 0 0; margin-right: 5px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;}
+        .tab.active { background: var(--white); color: var(--dark); }
+        .tab-add { padding: 10px; background: var(--success); color: white; border-radius: 8px 8px 0 0; cursor: pointer; font-weight: bold; border: none;}
+
+        .cart-items { flex: 1; overflow-y: auto; padding: 15px; background: var(--white);}
+        .c-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 10px;}
+        .c-info { font-size: 12px; font-weight: 600; }
+        .c-qty-controls { display: flex; align-items: center; gap: 10px; background: var(--light); padding: 5px 10px; border-radius: 6px; font-weight: bold;}
+        .qty-btn { border: none; background: none; font-size: 16px; font-weight: bold; cursor: pointer; color: var(--primary);}
+
+        .cart-footer { padding: 20px; border-top: 1px solid #eee; background: #f8f9fa; }
+        .payment-input { width: 100%; padding: 15px; font-size: 18px; font-weight: bold; border: 2px solid #dfe4ea; border-radius: 8px; margin-bottom: 10px; text-align: right;}
+        .total-row { display: flex; justify-content: space-between; font-size: 22px; font-weight: 800; margin-bottom: 10px; }
+        .change-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: 600; color: var(--gray); margin-bottom: 15px; }
+        .checkout-btn { width: 100%; background: var(--success); color: white; border: none; padding: 18px; border-radius: 8px; font-size: 16px; font-weight: 800; cursor: pointer; letter-spacing: 1px; }
+        .alert-banner { background: var(--primary); color: white; text-align: center; padding: 5px; font-size: 12px; font-weight: bold; display: none;}
+
+        /* VIEW 2: ONLINE */
+        .online-board { flex: 1; display: flex; flex-direction: column; background: var(--light); overflow: hidden;}
+        .board-header { padding: 20px; background: var(--white); border-bottom: 1px solid #dfe4ea;}
+        .board-title { font-size: 20px; font-weight: 800; margin: 0; color: var(--dark);}
+        
+        .orders-grid { flex: 1; overflow-y: auto; padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; align-content: start;}
+        
+        .order-card { background: var(--white); border-radius: 12px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 5px solid var(--gray); display: flex; flex-direction: column; cursor: pointer; transition: transform 0.2s;}
+        .order-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+        .order-card.PROCESSING { border-top-color: var(--warning); }
+        .order-card.ONTHEWAY { border-top-color: var(--primary); }
+        
+        .o-head { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px;}
+        .o-id { font-weight: 800; color: var(--dark); font-size: 14px;}
+        .o-time { font-size: 10px; color: var(--gray); font-weight: 600;}
+        .o-cust { font-size: 12px; margin-bottom: 4px; color: #555; line-height: 1.3;}
+        .o-cust span { color: var(--dark); font-weight: 800;}
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: none; align-items: center; justify-content: center;}
+        .modal-overlay.open { display: flex; }
+        .order-modal { background: var(--white); width: 90%; max-width: 500px; border-radius: 15px; overflow: hidden; display: flex; flex-direction: column; max-height: 90vh; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
+        
+        .modal-header { padding: 20px; background: var(--dark); color: white; display: flex; justify-content: space-between; align-items: center;}
+        .modal-title { font-size: 18px; font-weight: 800;}
+        .btn-close-modal { background: none; border: none; color: white; font-size: 20px; cursor: pointer; }
+        
+        .modal-body { padding: 20px; overflow-y: auto; flex: 1;}
+        .m-detail-group { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;}
+        .m-detail-group h4 { margin: 0 0 10px 0; font-size: 12px; color: var(--gray); text-transform: uppercase;}
+        .o-items { background: var(--white); border: 1px solid #eee; padding: 10px; border-radius: 8px; font-size: 13px;}
+        .o-items div { border-bottom: 1px solid #eee; padding: 6px 0; display: flex; justify-content: space-between;}
+        .o-items div:last-child { border: none;}
+        .o-total { font-size: 20px; font-weight: 800; color: var(--primary); text-align: right; margin-top: 15px; padding-top: 15px; border-top: 2px dashed #eee;}
+        
+        .modal-footer { padding: 20px; background: #f8f9fa; border-top: 1px solid #eee; display: flex; gap: 10px;}
+        .btn-action { flex: 1; padding: 15px; border: none; border-radius: 8px; font-weight: 800; cursor: pointer; color: white; font-size: 14px;}
+        .btn-prep { background: var(--warning); color: var(--dark); }
+        .btn-dispatch { background: var(--primary); }
+        .btn-deliver { background: var(--success); }
+
+        /* VIEW 3: INVENTORY */
+        .inv-section { flex: 1; padding: 30px; background: var(--light); overflow-y: auto;}
+        .inv-category-title { font-size: 18px; font-weight: 800; color: var(--dark); margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #dfe4ea; text-transform: uppercase; display: flex; align-items: center; gap: 10px;}
+        .inv-table { width: 100%; border-collapse: collapse; background: var(--white); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.02);}
+        .inv-table th, .inv-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #eee; font-size: 14px; }
+        .inv-table th { background: #f8f9fa; color: var(--gray); font-weight: 800; text-transform: uppercase; font-size: 11px;}
+        .inv-table tr:hover { background: #fdfdfd; }
+
+        /* VIEW 4: DASHBOARD */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .dash-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--primary); }
+        .dash-card.green { border-left-color: var(--success); }
+        .dash-card.red { border-left-color: var(--danger); }
+        .dash-value { font-size: 32px; font-weight: 800; margin-top: 10px; }
+        .dash-label { font-size: 12px; color: var(--gray); text-transform: uppercase; font-weight: 800; }
+        .expense-form { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; gap: 15px; align-items: flex-end;}
+        .expense-list { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-top: 20px; max-height: 400px; overflow-y: auto;}
+
+        /* THERMAL PRINTER */
+        #print-receipt { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-receipt, #print-receipt * { visibility: visible; }
+            #print-receipt { position: absolute; left: 0; top: 0; width: 58mm; font-family: monospace; font-size: 12px; color: black; padding: 0; margin: 0; }
+            .r-center { text-align: center; }
+            .r-bold { font-weight: bold; }
+            .r-line { border-bottom: 1px dashed black; margin: 5px 0; }
+            .r-item { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        }
+
+        .degz-copyright { text-align: center; font-size: 11px; color: var(--gray); padding: 20px; font-weight: 600; letter-spacing: 0.5px; margin-top: auto; }
+        .degz-copyright span { color: var(--primary); font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <div class="cloud-status">☁️ CLOUD SYNC ACTIVE</div>
+
+    <div class="top-nav">
+        <div class="brand" id="hub-brand">🏪 STORE HUB</div>
+        
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-pos" onclick="switchView('pos')">🛒 POS</button>
+            <button class="tab-btn" id="tab-online" onclick="switchView('online')">🛵 ONLINE <span class="badge" id="online-count">0</span></button>
+            <button class="tab-btn" id="tab-inventory" onclick="switchView('inventory')">📦 INVENTORY</button>
+            <button class="tab-btn" id="tab-dashboard" onclick="switchView('dashboard')">📊 DASHBOARD</button>
+            <button class="tab-btn" id="tab-settings" onclick="switchView('settings')">⚙️ SETTINGS</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        
+        <div class="view-panel active" id="view-pos">
+            <div class="left-panel">
+                <div class="header">
+                    <div style="font-size: 12px; font-weight: bold; color: var(--gray);">POS Operations</div>
+                    <div class="header-buttons"><button class="btn-shift" onclick="generateZReading()">📊 END SHIFT</button></div>
+                </div>
+                <div class="alert-banner" id="scan-alert">Item Scanned!</div>
+                <div class="controls">
+                    <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Search product or type Barcode..." onkeyup="searchProduct()">
+                    <button class="btn-scan" onclick="startCameraScanner('pos')">📷 POS SCANNER</button>
+                </div>
+                <div id="pos-reader-container"><div id="pos-reader"></div><button class="close-scanner" onclick="stopCameraScanner()">✖ CLOSE CAMERA</button></div>
+                <div class="product-grid" id="product-list"></div>
+                
+                <div class="degz-copyright">⚙️ System Engine by <span>Degz Enterprise</span><br>© 2026 All Rights Reserved. Licensed Software.</div>
+            </div>
+
+            <div class="right-panel">
+                <div class="cart-tabs" id="tab-container"></div>
+                <div class="cart-items" id="cart-list"></div>
+                <div class="cart-footer">
+                    <div class="total-row"><span>TOTAL DUE:</span><span style="color: var(--primary)">₱<span id="cart-total">0.00</span></span></div>
+                    <input type="number" id="cash-tendered" class="payment-input" placeholder="Enter Cash..." oninput="calculateChange()">
+                    <div class="change-row"><span>CHANGE:</span><span style="color: var(--danger)">₱<span id="cash-change">0.00</span></span></div>
+                    <button class="checkout-btn" onclick="processPOS()">💳 EXACT CASH / PAY</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-panel" id="view-online">
+            <div class="online-board">
+                <div class="board-header">
+                    <h2 class="board-title">Incoming Online Orders</h2>
+                    <p style="margin:5px 0 0 0; font-size:12px; color:var(--gray);">Tap a card to view order and update status.</p>
+                </div>
+                <div class="orders-grid" id="online-orders-list"></div>
+            </div>
+        </div>
+
+        <div class="view-panel" id="view-inventory">
+            <div class="inv-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div><h2 style="margin:0; font-size: 24px; color: var(--dark);">Store Inventory Status</h2></div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn-scan" style="padding: 12px 20px;" onclick="startCameraScanner('inv')">📷 SCAN TO ADD/EDIT</button>
+                        <button class="btn-scan" style="padding: 12px 20px; background:var(--success);" onclick="openInvModal('')">➕ MANUAL ADD</button>
+                    </div>
+                </div>
+                <div id="inv-reader-container"><div id="inv-reader"></div><button class="close-scanner" onclick="stopCameraScanner()">✖ CLOSE SCANNER</button></div>
+                <div id="inventory-grouped-list"></div>
+            </div>
+        </div>
+
+        <div class="view-panel" id="view-dashboard">
+            <div class="inv-section">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div><h2 style="margin:0; font-size: 24px; color: var(--dark);">Financial Dashboard</h2><p style="margin:0; color: var(--gray); font-size: 13px;">Monitor Today's Walk-in and Online Sales, Expenses, and Expected Cash in Drawer.</p></div>
+                </div>
+                <div class="dash-grid">
+                    <div class="dash-card"><div class="dash-label">Total Sales (Today)</div><div class="dash-value" style="color:var(--primary)">₱<span id="d-total-sales">0.00</span></div></div>
+                    <div class="dash-card green"><div class="dash-label">Cash in Drawer (Net)</div><div class="dash-value" style="color:var(--success)">₱<span id="d-cash-drawer">0.00</span></div></div>
+                    <div class="dash-card red"><div class="dash-label">Total Expenses (Today)</div><div class="dash-value" style="color:var(--danger)">₱<span id="d-expenses">0.00</span></div></div>
+                </div>
+                <div class="expense-form">
+                    <div style="flex:2;"><label style="font-size: 12px; font-weight: bold; color: var(--dark);">Expense Description:</label><input type="text" id="exp-desc" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 0;" placeholder="e.g. Bumili ng yelo, Pamasahe"></div>
+                    <div style="flex:1;"><label style="font-size: 12px; font-weight: bold; color: var(--dark);">Amount (₱):</label><input type="number" id="exp-amt" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 0;" placeholder="0.00"></div>
+                    <button class="btn-action btn-dispatch" style="padding: 12px 20px; height: 46px;" onclick="addExpense()">➖ RECORD EXPENSE</button>
+                </div>
+                <div class="expense-list">
+                    <h3 style="margin-top:0;">Today's Drawer Expenses</h3>
+                    <table class="inv-table">
+                        <thead><tr><th>Time</th><th>Description</th><th>Amount</th><th>Action</th></tr></thead>
+                        <tbody id="expense-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-panel" id="view-settings">
+            <div class="inv-section">
+                <h2 style="margin:0; font-size: 24px; color: var(--dark);">Store Configurations</h2>
+                <p style="margin:0; color: var(--gray); font-size: 13px; margin-bottom:20px;">I-setup ang Store Profile at E-Wallet numbers para sa online payments at resibo.</p>
+
+                <div style="background:var(--white); padding:30px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); max-width:500px;">
+                    
+                    <h3 style="margin-top:0; color:var(--dark); border-bottom:1px solid #eee; padding-bottom:10px;">🏪 Store Information</h3>
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Store Name (Lalabas sa Header at Resibo):</label>
+                    <input type="text" id="set-store-name" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. Degz Grocery">
+                    
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Complete Address:</label>
+                    <input type="text" id="set-store-address" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. 123 Main St., Manila">
+                    
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Contact Number:</label>
+                    <input type="text" id="set-store-phone" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. 09123456789">
+                    
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">VAT Reg TIN (Optional):</label>
+                    <input type="text" id="set-store-vat" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px;" placeholder="e.g. 123-456-789">
+
+                    <h3 style="margin-top:0; color:var(--info); border-bottom:1px solid #eee; padding-bottom:10px;">GCash Details</h3>
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Registered Name:</label>
+                    <input type="text" id="set-gcash-name" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. Juan Dela Cruz">
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">GCash Number:</label>
+                    <input type="text" id="set-gcash-num" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px;" placeholder="e.g. 09123456789">
+
+                    <h3 style="margin-top:0; color:var(--success); border-bottom:1px solid #eee; padding-bottom:10px;">PayMaya Details</h3>
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Registered Name:</label>
+                    <input type="text" id="set-maya-name" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. Juan Dela Cruz">
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Maya Number:</label>
+                    <input type="text" id="set-maya-num" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px;" placeholder="e.g. 09123456789">
+
+                    <button class="btn-action btn-dispatch" style="width:100%; padding:15px; font-size:16px;" onclick="saveStoreSettings()">💾 SAVE SETTINGS</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal-overlay" id="orderModal">
+        <div class="order-modal">
+            <div class="modal-header">
+                <div class="modal-title" id="m-orderId">ORD-XXXX</div>
+                <div style="display: flex; gap: 10px;">
+                    <button style="background: #dfe4ea; color: var(--dark); border: none; padding: 5px 12px; border-radius: 4px; font-weight: 800; cursor: pointer; font-size: 12px;" onclick="printOnlineReceipt()">🖨️ PRINT RECEIPT</button>
+                    <button class="btn-close-modal" onclick="closeOrderModal()">✖</button>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="m-detail-group">
+                    <h4>Customer Details</h4>
+                    <div class="o-cust">Name: <span id="m-name"></span></div>
+                    <div class="o-cust">Phone: <span id="m-phone"></span></div>
+                    <div class="o-cust">Address: <span id="m-address"></span></div>
+                    <div class="o-cust" style="margin-top:10px; padding-top:5px; border-top:1px dashed #ccc;">Payment: <b style="color:var(--primary)" id="m-payment"></b></div>
+                    <div class="o-cust">Ref No: <span id="m-ref"></span></div>
+                </div>
+                <div class="m-detail-group">
+                    <h4>Items to Pack</h4>
+                    <div class="o-items" id="m-items"></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px; color:var(--danger); font-weight:bold;">
+                        <span>Discount:</span><span>-₱<span id="m-discount">0.00</span></span>
+                    </div>
+                    <div class="o-total">TOTAL: ₱<span id="m-total">0.00</span></div>
+                </div>
+            </div>
+            <div class="modal-footer" id="m-action-footer"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="invModal">
+        <div class="order-modal" style="max-width: 400px;">
+            <div class="modal-header" style="background: var(--primary);"><div class="modal-title">📦 Add / Edit Stock</div><button class="btn-close-modal" onclick="closeInvModal()">✖</button></div>
+            <div class="modal-body">
+                <label style="font-size: 12px; font-weight: bold; color: var(--dark);">Barcode / ID:</label><input type="text" id="m-inv-id" class="payment-input" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--dark);">Pangalan ng Produkto:</label><input type="text" id="m-inv-name" class="payment-input" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 15px;">
+                <label style="font-size: 12px; font-weight: bold; color: var(--dark);">Kategorya (Category Dropdown):</label>
+                <div style="display:flex; gap:5px; margin-bottom: 15px;">
+                    <select id="m-inv-cat" class="payment-input" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 0; flex:1;"></select>
+                    <button class="btn-action btn-dispatch" style="padding: 0 15px; height: 42px; border-radius: 6px;" onclick="addNewCategory()">➕</button>
+                    <button class="btn-action" style="background: var(--danger); padding: 0 15px; height: 42px; border-radius: 6px;" onclick="deleteCategory()">🗑️</button>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                    <div style="flex: 1;"><label style="font-size: 12px; font-weight: bold; color: var(--dark);">Price (₱):</label><input type="number" id="m-inv-price" class="payment-input" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 0;"></div>
+                    <div style="flex: 1;"><label style="font-size: 12px; font-weight: bold; color: var(--dark);">Stock:</label><input type="number" id="m-inv-stock" class="payment-input" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 0;"></div>
+                </div>
+                <label style="font-size: 12px; font-weight: bold; color: var(--dark);">Icon Emoji:</label><input type="text" id="m-inv-icon" class="payment-input" placeholder="🛒" style="font-size:14px; text-align:left; padding: 10px; margin-bottom: 10px;">
+            </div>
+            <div class="modal-footer"><button class="btn-action btn-ready" style="width:100%;" onclick="saveInvItem()">💾 SAVE TO DATABASE</button></div>
+        </div>
+    </div>
+
+    <div id="print-receipt">
+        <div class="r-center r-bold" style="font-size: 16px;" id="receipt-store-name">DEGZ PULSE HUB</div>
+        <div class="r-center" id="receipt-store-address" style="margin-bottom:3px;">Online & Walk-in Store</div>
+        <div class="r-center" id="receipt-store-phone" style="display:none; font-size:10px;"></div>
+        <div class="r-center" id="receipt-store-vat" style="display:none; font-size:10px; margin-bottom:3px;"></div>
+        <div class="r-line"></div>
+        <div id="receipt-date"></div><div id="receipt-order-id"></div><div class="r-line"></div>
+        <div class="r-item r-bold"><span>ITEM</span><span>AMT</span></div><div id="receipt-items"></div>
+        <div id="receipt-discount-row" class="r-item" style="display:none; margin-top:5px;"><span>DISCOUNT:</span><span id="receipt-discount"></span></div>
+        <div class="r-line"></div>
+        <div class="r-item r-bold" style="font-size: 14px;"><span>TOTAL:</span><span id="receipt-total"></span></div>
+        <div class="r-item"><span>PAYMENT:</span><span id="receipt-payment-method"></span></div>
+        <div class="r-item"><span>CASH/REF:</span><span id="receipt-cash"></span></div>
+        <div class="r-item"><span>CHANGE:</span><span id="receipt-change"></span></div><div class="r-line"></div><div class="r-center">Thank you!</div>
+    </div>
+
+    <audio id="alert-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
+    <script>
+        // ☁️ CLOUD SYNC ENGINE CONSTANTS
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbwTMK_DCtNzHYGjn3Pkconli62fbjU8z9wADSfeuSDS8reG-VDaumBcIa_qg1-NN7FK/exec";
+
+        function syncToCloud() {
+            let payload = {
+                inv: JSON.parse(localStorage.getItem('dg_inv') || '[]'),
+                ord: JSON.parse(localStorage.getItem('dg_ord') || '[]'),
+                settings: JSON.parse(localStorage.getItem('dg_settings') || '{}'),
+                cats: JSON.parse(localStorage.getItem('dg_cats') || '[]'),
+                exp: JSON.parse(localStorage.getItem('dg_exp') || '[]')
+            };
+            fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify({ action: "SYNC_UP", payload: payload }) })
+            .catch(err => console.log("Cloud Sync Error:", err));
+        }
+
+        function syncFromCloud() {
+            fetch(CLOUD_URL).then(res => res.json()).then(data => {
+                let currentOrd = localStorage.getItem('dg_ord');
+                
+                if(data.inv) localStorage.setItem('dg_inv', JSON.stringify(data.inv));
+                if(data.ord) localStorage.setItem('dg_ord', JSON.stringify(data.ord));
+                if(data.settings) localStorage.setItem('dg_settings', JSON.stringify(data.settings));
+                if(data.cats) localStorage.setItem('dg_cats', JSON.stringify(data.cats));
+                if(data.exp) localStorage.setItem('dg_exp', JSON.stringify(data.exp));
+
+                // Intelligent UI Refresh without disrupting POS typing
+                if(currentOrd !== JSON.stringify(data.ord)) { checkOnlineOrders(); }
+                // Update Dashboard stats silently
+                if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard(); 
+            }).catch(err => console.log("Cloud Load Error:", err));
+        }
+
+        // Start Cloud Listener
+        setInterval(syncFromCloud, 4000); 
+
+        let inventory = []; let carts = [ { id: 1, items: [] } ]; let activeCartIndex = 0; let cartCounter = 1;
+        let shiftSales = parseFloat(localStorage.getItem('dg_shift_sales') || 0); let lastOrderCount = 0;
+        let currentOnlineOrderId = ''; 
+
+        function updateStoreBranding() {
+            let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}');
+            let storeName = settings.storeName || 'DEGZ PULSE';
+            
+            document.getElementById('hub-brand').innerText = `🏪 ${storeName.toUpperCase()} - STAFF HUB`;
+            document.title = storeName + " Staff Hub";
+
+            document.getElementById('receipt-store-name').innerText = storeName.toUpperCase();
+            document.getElementById('receipt-store-address').innerText = settings.storeAddress || 'Online & Walk-in Store';
+            
+            if(settings.storeVat) {
+                document.getElementById('receipt-store-vat').innerText = 'VAT TIN: ' + settings.storeVat;
+                document.getElementById('receipt-store-vat').style.display = 'block';
+            } else { document.getElementById('receipt-store-vat').style.display = 'none'; }
+            
+            if(settings.storePhone) {
+                document.getElementById('receipt-store-phone').innerText = 'Contact: ' + settings.storePhone;
+                document.getElementById('receipt-store-phone').style.display = 'block';
+            } else { document.getElementById('receipt-store-phone').style.display = 'none'; }
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active')); document.getElementById('view-' + viewName).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); let btn = document.getElementById('tab-' + viewName); btn.classList.add('active');
+            if(viewName === 'online') btn.classList.remove('alert');
+            if(viewName === 'inventory') renderInventoryTab();
+            if(viewName === 'dashboard') renderDashboard();
+            if(viewName === 'settings') loadStoreSettings(); 
+        }
+
+        function initApp() {
+            updateStoreBranding(); 
+            inventory = JSON.parse(localStorage.getItem('dg_inv') || '[]');
+            renderProducts(inventory); renderTabs(); renderCart(); checkOnlineOrders(); renderInventoryTab(); renderDashboard();
+        }
+
+        // --- 🛒 POS LOGIC ---
+        function renderProducts(items) { let html = ''; items.forEach(p => { let noStock = p.stock <= 0 ? 'no-stock' : ''; html += `<div class="p-card ${noStock}" onclick="addToCart('${p.id}')"><div class="p-icon">${p.icon || '🛍️'}</div><div class="p-name">${p.name}</div><div class="p-price">₱${Number(p.price).toFixed(2)}</div><div class="p-stock">Stock: ${p.stock} | ID: ${p.id.toString().slice(-4)}</div></div>`; }); document.getElementById('product-list').innerHTML = html; }
+        function searchProduct() { let query = document.getElementById('searchInput').value.toLowerCase(); let filtered = inventory.filter(p => p.name.toLowerCase().includes(query) || p.id.toString().includes(query)); renderProducts(filtered); }
+        function renderTabs() { let html = ''; carts.forEach((cart, index) => { let isActive = index === activeCartIndex ? 'active' : ''; html += `<div class="tab ${isActive}" onclick="switchTab(${index})">🛒 Cart ${cart.id} ${carts.length > 1 ? `<span style="color:#ff7675; margin-left:5px;" onclick="event.stopPropagation(); removeTab(${index})">✖</span>` : ''}</div>`; }); html += `<button class="tab-add" onclick="addNewTab()">+ NEW</button>`; document.getElementById('tab-container').innerHTML = html; }
+        function switchTab(index) { activeCartIndex = index; renderTabs(); renderCart(); }
+        function addNewTab() { if(carts.length >= 5) return alert("Max 5 Carts allowed!"); cartCounter++; carts.push({ id: cartCounter, items: [] }); activeCartIndex = carts.length - 1; renderTabs(); renderCart(); }
+        function removeTab(index) { if(carts.length === 1) return; if(carts[index].items.length > 0 && !confirm("Buburahin ang cart na ito?")) return; carts.splice(index, 1); if(activeCartIndex >= carts.length) activeCartIndex = carts.length - 1; renderTabs(); renderCart(); }
+        function addToCart(productId) { let item = inventory.find(i => String(i.id) === String(productId)); if(!item || item.stock <= 0) return; let activeItems = carts[activeCartIndex].items; let existing = activeItems.find(i => String(i.id) === String(productId)); if(existing) { if(existing.qty >= item.stock) return; existing.qty++; } else { activeItems.push({ ...item, qty: 1 }); } showScanAlert(item.name); renderCart(); }
+        function updateQty(id, change) { let activeItems = carts[activeCartIndex].items; let cartItem = activeItems.find(i => String(i.id) === String(id)); let invItem = inventory.find(i => String(i.id) === String(id)); if(cartItem) { if(change > 0 && cartItem.qty >= invItem.stock) return; cartItem.qty += change; if(cartItem.qty <= 0) carts[activeCartIndex].items = activeItems.filter(i => String(i.id) !== String(id)); renderCart(); } }
+        function renderCart() { let activeItems = carts[activeCartIndex].items; let html = ''; let total = 0; if(activeItems.length === 0) { html = `<div style="text-align:center; padding: 30px; color: var(--gray);">Cart is empty.</div>`; } else { activeItems.forEach(item => { total += item.price * item.qty; html += `<div class="c-item"><div><div class="c-info">${item.name}</div><div style="color:var(--primary); font-weight:800; font-size:12px;">₱${Number(item.price).toFixed(2)}</div></div><div class="c-qty-controls"><button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button></div></div>`; }); } document.getElementById('cart-list').innerHTML = html; document.getElementById('cart-total').innerText = total.toFixed(2); calculateChange(); }
+        function calculateChange() { let total = parseFloat(document.getElementById('cart-total').innerText); let cash = parseFloat(document.getElementById('cash-tendered').value || 0); let change = cash - total; document.getElementById('cash-change').innerText = change > 0 ? change.toFixed(2) : "0.00"; }
+        
+        function processPOS() { 
+            let activeItems = carts[activeCartIndex].items; if(activeItems.length === 0) return alert("Empty cart!"); 
+            let total = parseFloat(document.getElementById('cart-total').innerText); let cash = parseFloat(document.getElementById('cash-tendered').value || 0); 
+            if(cash < total) return alert("Kulang ang bayad!"); 
+            
+            let orderId = "POS-" + Math.floor(Math.random() * 9999); 
+            buildReceipt(orderId, activeItems, total, cash, cash - total, 0, "CASH", cash.toFixed(2)); window.print(); 
+            
+            activeItems.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory)); 
+            
+            let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); 
+            existingOrders.push({ orderId: orderId, customerName: "WALK-IN", customerPhone: "N/A", storeName: "STORE", location: "N/A", landmark: "N/A", totalAmount: total.toFixed(2), discount: 0, paymentMethod: "CASH", paymentRef: "N/A", items: activeItems, status: "DELIVERED", timestamp: new Date().toISOString() }); 
+            localStorage.setItem('dg_ord', JSON.stringify(existingOrders)); 
+            
+            shiftSales += total; localStorage.setItem('dg_shift_sales', shiftSales); 
+            carts[activeCartIndex].items = []; document.getElementById('cash-tendered').value = ''; renderCart(); renderProducts(inventory); renderInventoryTab(); renderDashboard();
+            
+            syncToCloud(); // 🔥 PUSH TO CLOUD
+        }
+
+        // --- 🛵 ONLINE BOARD LOGIC ---
+        function checkOnlineOrders() {
+            let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]');
+            let activeOrders = orders.filter(o => o.status === "PENDING" || o.status === "PROCESSING" || o.status === "ON THE WAY");
+            let badgeCount = orders.filter(o => o.status === "PENDING" || o.status === "PROCESSING").length;
+            document.getElementById('online-count').innerText = badgeCount;
+            if(badgeCount > lastOrderCount) { document.getElementById('tab-online').classList.add('alert'); let sound = document.getElementById('alert-sound'); sound.play().catch(e => console.log("Audio blocked")); }
+            lastOrderCount = badgeCount; renderOnlineBoard(activeOrders);
+        }
+
+        function renderOnlineBoard(activeOrders) {
+            let html = ''; if(activeOrders.length === 0) { html = `<div style="text-align:center; padding:50px; color:var(--gray); grid-column:1/-1;">No pending online orders right now.</div>`; } else { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); html += `<div class="order-card ${badgeClass}" onclick="openOrderModal('${o.orderId}')"><div class="o-head"><span class="o-id">${o.orderId}</span><span class="o-time">${new Date(o.timestamp).toLocaleTimeString()}</span></div><div class="o-cust">Name: <span>${o.customerName}</span></div><div class="o-cust">Phone: <span>${o.customerPhone}</span></div><div class="o-cust">Address: <span>${o.location}</span></div><div style="margin-top: 10px; font-size: 11px; text-align: center; color: var(--primary); font-weight: bold;">[ CURRENT STATUS: ${o.status} ]</div></div>`; }); }
+            document.getElementById('online-orders-list').innerHTML = html;
+        }
+
+        function openOrderModal(orderId) {
+            let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === orderId); if(!o) return;
+            currentOnlineOrderId = orderId; 
+
+            document.getElementById('m-orderId').innerText = o.orderId; document.getElementById('m-name').innerText = o.customerName; document.getElementById('m-phone').innerText = o.customerPhone; document.getElementById('m-address').innerText = o.location;
+            document.getElementById('m-payment').innerText = o.paymentMethod || 'COD'; document.getElementById('m-ref').innerText = o.paymentRef || 'N/A'; document.getElementById('m-discount').innerText = (o.discount || 0).toFixed(2);
+
+            let itemsHtml = o.items.map(i => `<div><span>${i.qty}x ${i.name}</span> <span style="font-weight:bold;">₱${(i.price * i.qty).toFixed(2)}</span></div>`).join('');
+            document.getElementById('m-items').innerHTML = itemsHtml;
+            document.getElementById('m-total').innerText = Number(o.totalAmount).toFixed(2);
+
+            let footerHtml = '';
+            if(o.status === "PENDING") { footerHtml = `<button class="btn-action btn-prep" onclick="updateOrderStatus('${o.orderId}', 'PROCESSING')">⚙️ PROCESS ORDER</button>`; } 
+            else if (o.status === "PROCESSING") { footerHtml = `<button class="btn-action btn-dispatch" onclick="updateOrderStatus('${o.orderId}', 'ON THE WAY')">🛵 DISPATCH RIDER</button>`; } 
+            else if (o.status === "ON THE WAY") { footerHtml = `<button class="btn-action btn-deliver" onclick="updateOrderStatus('${o.orderId}', 'DELIVERED')">✅ MARK AS DELIVERED</button>`; }
+            document.getElementById('m-action-footer').innerHTML = footerHtml; document.getElementById('orderModal').classList.add('open');
+        }
+
+        function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
+        function updateOrderStatus(orderId, newStatus) { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let index = orders.findIndex(o => o.orderId === orderId); if(index !== -1) { orders[index].status = newStatus; localStorage.setItem('dg_ord', JSON.stringify(orders)); closeOrderModal(); checkOnlineOrders(); renderDashboard(); syncToCloud(); /* 🔥 PUSH TO CLOUD */ } }
+
+        function printOnlineReceipt() {
+            let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === currentOnlineOrderId); if(!o) return alert("Order not found!");
+            buildReceipt(o.orderId + " [ONL]", o.items, parseFloat(o.totalAmount), 0, 0, o.discount || 0, o.paymentMethod || "COD", o.paymentRef || "---");
+            window.print(); 
+        }
+
+        function buildReceipt(orderId, items, total, cash, change, discount, payMethod, payRef) { 
+            document.getElementById('receipt-date').innerText = "Date: " + new Date().toLocaleString(); 
+            document.getElementById('receipt-order-id').innerText = "Trans: " + orderId; 
+            let itemsHtml = ''; items.forEach(i => { itemsHtml += `<div>${i.name.substring(0,15)}</div><div class="r-item"><span>  ${i.qty} x ${i.price}</span><span>${(i.price * i.qty).toFixed(2)}</span></div>`; }); 
+            document.getElementById('receipt-items').innerHTML = itemsHtml; 
+            
+            if(discount > 0) { document.getElementById('receipt-discount').innerText = "-₱" + discount.toFixed(2); document.getElementById('receipt-discount-row').style.display = "flex"; } 
+            else { document.getElementById('receipt-discount-row').style.display = "none"; }
+            
+            document.getElementById('receipt-total').innerText = total.toFixed(2); 
+            document.getElementById('receipt-payment-method').innerText = payMethod;
+            document.getElementById('receipt-cash').innerText = payMethod === "CASH" ? cash.toFixed(2) : payRef; 
+            document.getElementById('receipt-change').innerText = payMethod === "CASH" ? change.toFixed(2) : "---"; 
+        }
+
+        // --- ⚙️ STORE SETTINGS LOGIC ---
+        function loadStoreSettings() {
+            let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}');
+            document.getElementById('set-store-name').value = settings.storeName || '';
+            document.getElementById('set-store-address').value = settings.storeAddress || '';
+            document.getElementById('set-store-phone').value = settings.storePhone || '';
+            document.getElementById('set-store-vat').value = settings.storeVat || '';
+            
+            document.getElementById('set-gcash-name').value = settings.gcashName || '';
+            document.getElementById('set-gcash-num').value = settings.gcashNum || '';
+            document.getElementById('set-maya-name').value = settings.mayaName || '';
+            document.getElementById('set-maya-num').value = settings.mayaNum || '';
+        }
+
+        function saveStoreSettings() {
+            let settings = {
+                storeName: document.getElementById('set-store-name').value.trim(), storeAddress: document.getElementById('set-store-address').value.trim(),
+                storePhone: document.getElementById('set-store-phone').value.trim(), storeVat: document.getElementById('set-store-vat').value.trim(),
+                gcashName: document.getElementById('set-gcash-name').value.trim(), gcashNum: document.getElementById('set-gcash-num').value.trim(),
+                mayaName: document.getElementById('set-maya-name').value.trim(), mayaNum: document.getElementById('set-maya-num').value.trim()
+            };
+            localStorage.setItem('dg_settings', JSON.stringify(settings));
+            updateStoreBranding(); syncToCloud(); // 🔥 PUSH TO CLOUD
+            alert("✅ Settings Saved!");
+        }
+
+        // --- 📦 INVENTORY MONITOR & SCANNER ---
+        function renderInventoryTab() { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); if(inv.length === 0) { document.getElementById('inventory-grouped-list').innerHTML = `<div style="text-align:center; padding:50px; color:var(--gray);">No items in inventory.</div>`; return; } let grouped = {}; inv.forEach(item => { let category = item.cat || 'Uncategorized'; if(!grouped[category]) grouped[category] = []; grouped[category].push(item); }); let html = ''; for(let cat in grouped) { html += `<div class="inv-category-title">📂 ${cat}</div>`; html += `<table class="inv-table"><thead><tr><th>Barcode / ID</th><th>Item Details</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead><tbody>`; grouped[cat].forEach(item => { let statusHtml = ''; if(item.stock > 10) statusHtml = `<span style="color:var(--success)">🟢 Good</span>`; else if(item.stock > 0) statusHtml = `<span style="color:var(--warning)">🟠 Low Stock</span>`; else statusHtml = `<span style="color:var(--danger)">🔴 Out of Stock</span>`; html += `<tr><td style="color:var(--gray); font-family:monospace;">${item.id}</td><td><span style="font-size:18px;">${item.icon || '🛍️'}</span> <b style="margin-left:5px;">${item.name}</b></td><td style="font-weight:600; color:var(--primary);">₱${Number(item.price).toFixed(2)}</td><td style="font-size:16px; font-weight:800;">${item.stock}</td><td><b>${statusHtml}</b></td><td><button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="openInvModal('${item.id}')">✏️ EDIT</button></td></tr>`; }); html += `</tbody></table>`; } document.getElementById('inventory-grouped-list').innerHTML = html; }
+        let html5QrcodeScanner; let currentScanMode = 'pos'; function startCameraScanner(mode) { currentScanMode = mode; let containerId = mode === 'pos' ? 'pos-reader-container' : 'inv-reader-container'; let readerId = mode === 'pos' ? 'pos-reader' : 'inv-reader'; document.getElementById(containerId).style.display = 'block'; html5QrcodeScanner = new Html5QrcodeScanner(readerId, { fps: 10, qrbox: 250 }); html5QrcodeScanner.render((decodedText) => { stopCameraScanner(); if(currentScanMode === 'pos') { let item = inventory.find(i => String(i.id) === decodedText || String(i.id).slice(-4) === decodedText); if(item) addToCart(item.id); else alert("❌ Barcode not found!"); } else { openInvModal(decodedText); } }); } function stopCameraScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('pos-reader-container').style.display = 'none'; document.getElementById('inv-reader-container').style.display = 'none'; }
+        let barcodeBuffer = ""; let barcodeTimer; document.addEventListener('keypress', function(e) { if(document.activeElement.tagName === 'INPUT') return; if (e.key === 'Enter') { if (barcodeBuffer.length > 2) { if (document.getElementById('view-pos').classList.contains('active')) { let item = inventory.find(i => String(i.id) === barcodeBuffer || String(i.id).slice(-4) === barcodeBuffer); if(item) addToCart(item.id); else alert("❌ Item not found!"); } else if (document.getElementById('view-inventory').classList.contains('active')) { openInvModal(barcodeBuffer); } } barcodeBuffer = ""; } else { barcodeBuffer += e.key; clearTimeout(barcodeTimer); barcodeTimer = setTimeout(() => { barcodeBuffer = ""; }, 50); } }); function showScanAlert(itemName) { let banner = document.getElementById('scan-alert'); banner.innerText = `✅ Added: ${itemName}`; banner.style.display = 'block'; setTimeout(() => { banner.style.display = 'none'; }, 2000); }
+        function loadCategoryDropdown() { let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); if(cats.length === 0) { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); cats = [...new Set(inv.map(i => i.cat || 'Others'))]; if(cats.length === 0) cats = ['Others', 'Staples', 'Snacks', 'Drinks']; localStorage.setItem('dg_cats', JSON.stringify(cats)); } let html = ''; cats.forEach(c => { html += `<option value="${c}">${c}</option>`; }); document.getElementById('m-inv-cat').innerHTML = html; } function addNewCategory() { let newCat = prompt("Pangalan ng bagong Kategorya:"); if(!newCat || newCat.trim() === '') return; newCat = newCat.trim(); let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); if(cats.includes(newCat)) return alert("Buhay na ang kategoryang ito sa listahan!"); cats.push(newCat); localStorage.setItem('dg_cats', JSON.stringify(cats)); loadCategoryDropdown(); document.getElementById('m-inv-cat').value = newCat; syncToCloud(); /* 🔥 PUSH TO CLOUD */ alert("✅ Bagong Kategorya Added!"); } function deleteCategory() { let select = document.getElementById('m-inv-cat'); let catToDelete = select.value; if(!catToDelete) return; if(catToDelete === 'Others') return alert("Bawal burahin ang 'Others'."); if(!confirm(`Sigurado kang buburahin ang "${catToDelete}"?`)) return; let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); cats = cats.filter(c => c !== catToDelete); localStorage.setItem('dg_cats', JSON.stringify(cats)); let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); inv.forEach(i => { if(i.cat === catToDelete) i.cat = 'Others'; }); localStorage.setItem('dg_inv', JSON.stringify(inv)); loadCategoryDropdown(); initApp(); syncToCloud(); /* 🔥 PUSH TO CLOUD */ alert("🗑️ Kategorya Deleted!"); }
+        function openInvModal(barcodeOrId) { loadCategoryDropdown(); let item = inventory.find(i => String(i.id) === String(barcodeOrId)); if(item) { document.getElementById('m-inv-id').value = item.id; document.getElementById('m-inv-name').value = item.name; document.getElementById('m-inv-cat').value = item.cat || 'Others'; document.getElementById('m-inv-price').value = item.price; document.getElementById('m-inv-stock').value = item.stock; document.getElementById('m-inv-icon').value = item.icon || '🛍️'; document.getElementById('m-inv-id').disabled = true; } else { document.getElementById('m-inv-id').value = barcodeOrId || Date.now(); document.getElementById('m-inv-name').value = ''; document.getElementById('m-inv-cat').value = 'Others'; document.getElementById('m-inv-price').value = ''; document.getElementById('m-inv-stock').value = ''; document.getElementById('m-inv-icon').value = '🛍️'; document.getElementById('m-inv-id').disabled = barcodeOrId ? true : false; } document.getElementById('invModal').classList.add('open'); } function closeInvModal() { document.getElementById('invModal').classList.remove('open'); } function saveInvItem() { let id = document.getElementById('m-inv-id').value; let name = document.getElementById('m-inv-name').value; let cat = document.getElementById('m-inv-cat').value; let price = parseFloat(document.getElementById('m-inv-price').value); let stock = parseInt(document.getElementById('m-inv-stock').value); let icon = document.getElementById('m-inv-icon').value || '🛍️'; if(!name || !cat || isNaN(price) || isNaN(stock)) return alert("Kumpletuhin ang mga detalye!"); let index = inventory.findIndex(i => String(i.id) === String(id)); if(index !== -1) { inventory[index] = { id, name, cat, price, stock, icon }; } else { inventory.push({ id, name, cat, price, stock, icon }); } localStorage.setItem('dg_inv', JSON.stringify(inventory)); closeInvModal(); initApp(); syncToCloud(); /* 🔥 PUSH TO CLOUD */ }
+
+        // --- 📊 DASHBOARD LOGIC ---
+        function renderDashboard() { let today = new Date().toLocaleDateString(); let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let expenses = JSON.parse(localStorage.getItem('dg_exp') || '[]'); let todaysOrders = orders.filter(o => new Date(o.timestamp).toLocaleDateString() === today && (o.status === "DELIVERED" || o.orderId.startsWith('POS'))); let totalSales = todaysOrders.reduce((sum, o) => sum + parseFloat(o.totalAmount), 0); let todaysExp = expenses.filter(e => new Date(e.timestamp).toLocaleDateString() === today); let totalExp = todaysExp.reduce((sum, e) => sum + parseFloat(e.amount), 0); let cashInDrawer = totalSales - totalExp; document.getElementById('d-total-sales').innerText = totalSales.toFixed(2); document.getElementById('d-expenses').innerText = totalExp.toFixed(2); document.getElementById('d-cash-drawer').innerText = cashInDrawer.toFixed(2); let html = ''; if(todaysExp.length === 0) { html = `<tr><td colspan="4" style="text-align:center; color:var(--gray); padding:20px;">No expenses recorded today.</td></tr>`; } else { todaysExp.forEach((e) => { html += `<tr><td style="color:var(--gray);">${new Date(e.timestamp).toLocaleTimeString()}</td><td><b>${e.desc}</b></td><td style="color:var(--danger); font-weight:bold;">₱${parseFloat(e.amount).toFixed(2)}</td><td><button style="background:var(--danger); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="deleteExpense(${e.id})">✖</button></td></tr>`; }); } document.getElementById('expense-table-body').innerHTML = html; } function addExpense() { let desc = document.getElementById('exp-desc').value.trim(); let amt = parseFloat(document.getElementById('exp-amt').value); if(!desc || isNaN(amt) || amt <= 0) return alert("Paki-lagay ang tamang detalye ng expense."); let expenses = JSON.parse(localStorage.getItem('dg_exp') || '[]'); expenses.push({ id: Date.now(), desc: desc, amount: amt, timestamp: new Date().toISOString() }); localStorage.setItem('dg_exp', JSON.stringify(expenses)); document.getElementById('exp-desc').value = ''; document.getElementById('exp-amt').value = ''; renderDashboard(); syncToCloud(); /* 🔥 PUSH TO CLOUD */ } function deleteExpense(id) { if(!confirm("Burahin ang expense record na ito?")) return; let expenses = JSON.parse(localStorage.getItem('dg_exp') || '[]'); expenses = expenses.filter(e => e.id !== id); localStorage.setItem('dg_exp', JSON.stringify(expenses)); renderDashboard(); syncToCloud(); /* 🔥 PUSH TO CLOUD */ }
+
+        initApp(); 
+    </script>
+</body>
+</html>
