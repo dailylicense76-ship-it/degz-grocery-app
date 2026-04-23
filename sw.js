@@ -7,15 +7,16 @@ self.addEventListener('install', e => {
                 './',
                 './index.html',
                 './cashier.html',
-                './manifest.json'
+                './manifest.json',
+                './logo.png'
             ]);
         })
     );
 });
 
 self.addEventListener('fetch', e => {
-    if (e.request.url.includes('script.google.com')) {
-        return fetch(e.request); // Huwag i-cache ang Cloud Database
+    if (e.request.url.includes('script.google.com') || e.request.url.includes('world.openfoodfacts.org')) {
+        return fetch(e.request); 
     }
     e.respondWith(
         caches.match(e.request).then(res => {

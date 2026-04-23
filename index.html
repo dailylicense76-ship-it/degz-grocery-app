@@ -6,15 +6,18 @@
     <meta name="theme-color" content="#00b894">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="apple-touch-icon" href="logo.png">
+
     <title>Store Customer App</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         :root { --primary: #00b894; --dark: #1e272e; --light: #f1f2f6; --white: #ffffff; --gray: #a4b0be; --danger: #ff4757; --warning: #fdcb6e; --info: #0984e3; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { margin: 0; background-color: var(--light); color: var(--dark); height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent;}
-
         .cloud-status { background: #0984e3; color: white; text-align: center; font-size: 10px; font-weight: 800; padding: 3px; letter-spacing: 1px; }
-
         #auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; background: linear-gradient(135deg, var(--dark), #2d3436); padding: 20px; z-index: 2000; position: relative;}
         .auth-box { background: var(--white); padding: 30px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
         .auth-logo { font-size: 28px; font-weight: 800; color: var(--primary); margin-bottom: 5px; }
@@ -24,43 +27,33 @@
         .auth-switch { margin-top: 15px; font-size: 12px; color: var(--gray); cursor: pointer; font-weight: 600; }
         .auth-switch span { color: var(--primary); }
         .dev-reset { color: var(--danger); font-size: 10px; font-weight: 800; margin-top: 20px; cursor: pointer; letter-spacing: 1px; text-decoration: underline;}
-
         #main-app { display: none; padding-bottom: 80px; min-height: 100vh; }
         .header { background: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px;}
-        
         .app-brand { font-size: 18px; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px;}
         .user-greeting { font-size: 14px; font-weight: 800; color: var(--dark); display: flex; flex-direction: column;}
         .profile-link { font-size: 11px; color: var(--primary); font-weight: 800; cursor: pointer; margin-top: 2px;}
         .header-icons { display: flex; gap: 15px; align-items: center;}
         .cart-icon { position: relative; font-size: 24px; cursor: pointer; }
         .cart-badge { position: absolute; top: -5px; right: -8px; background: var(--danger); color: white; font-size: 10px; font-weight: bold; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-
         .hero { padding: 15px 20px; background: linear-gradient(135deg, var(--primary), #00cec9); color: white; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
         .search-bar { width: 100%; padding: 10px 15px; border-radius: 8px; border: none; font-size: 14px; outline: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 10px;}
-
         .categories { display: flex; gap: 8px; padding: 15px 20px; overflow-x: auto; scrollbar-width: none; }
         .categories::-webkit-scrollbar { display: none; }
         .cat-btn { padding: 6px 14px; background: var(--white); border: 1px solid #dfe4ea; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: 0.3s; }
         .cat-btn.active { background: var(--dark); color: white; border-color: var(--dark); }
-
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; padding: 0 15px; }
         .product-card { background: var(--white); border-radius: 10px; padding: 12px 10px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;}
-        
-        /* 🔥 UPDATED IMAGE CSS */
         .p-icon { font-size: 35px; margin-bottom: 5px; height: 50px; display: flex; align-items: center; justify-content: center; }
         .p-icon img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
-        
         .p-name { font-size: 11px; font-weight: 600; margin-bottom: 5px; color: var(--dark); line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
         .p-price { font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 10px; }
         .add-btn { width: 100%; background: var(--light); color: var(--dark); border: none; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 800; cursor: pointer; }
         .add-btn:hover { background: var(--primary); color: white; }
         .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--gray); font-weight: 600; background: var(--white); border-radius: 12px; border: 2px dashed #dfe4ea;}
-        
         .profile-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 400px; background: var(--white); border-radius: 15px; z-index: 1001; padding: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .profile-modal.open { display: block; }
         .modal-title { font-size: 18px; font-weight: 800; border-bottom: 1px solid var(--light); padding-bottom: 10px; margin-bottom: 15px; display: flex; justify-content: space-between;}
         .btn-logout { background: var(--danger); color: white; border: none; padding: 10px; width: 100%; border-radius: 8px; font-weight: bold; margin-top: 10px;}
-
         .cart-drawer { position: fixed; top: 0; right: -100%; width: 100%; max-width: 400px; height: 100vh; background: var(--white); z-index: 1000; transition: 0.4s ease-in-out; display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
         .cart-drawer.open { right: 0; }
         .cart-header { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--light); font-weight: 800; font-size: 16px; }
@@ -70,25 +63,21 @@
         .c-info { display: flex; align-items: center; gap: 8px; }
         .c-qty-controls { display: flex; align-items: center; gap: 8px; background: var(--light); padding: 5px 8px; border-radius: 6px; font-weight: bold; font-size: 12px;}
         .qty-btn { border: none; background: none; font-size: 14px; font-weight: bold; cursor: pointer; color: var(--primary);}
-        
         .cart-footer { padding: 15px; border-top: 1px solid var(--light); background: var(--white); }
         .delivery-info { background: var(--light); padding: 10px; border-radius: 8px; font-size: 10px; color: var(--dark); margin-bottom: 10px; line-height: 1.4;}
         .delivery-info span { color: var(--primary); font-weight: 800; }
         .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: 800; margin-bottom: 5px; }
         .checkout-btn { width: 100%; background: var(--dark); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 800; cursor: pointer; }
-
         .promo-box { display: flex; gap: 5px; margin-bottom: 10px; }
         .promo-input { flex: 1; padding: 8px; border: 1px solid #dfe4ea; border-radius: 6px; font-size: 12px; outline: none; text-transform: uppercase;}
         .promo-btn { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer;}
         .discount-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--danger); font-weight: 800; margin-bottom: 10px; display: none;}
-        
         .payment-box { background: var(--light); padding: 10px; border-radius: 8px; margin-bottom: 15px; }
         .payment-label { font-size: 10px; font-weight: 800; color: var(--gray); margin-bottom: 5px; display: block;}
         .payment-select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #dfe4ea; font-size: 12px; margin-bottom: 5px;}
         .payment-ref { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #dfe4ea; font-size: 12px; display: none; margin-top: 5px;}
         .ewallet-instructions { display: none; background: #e8f4f8; padding: 10px; border-radius: 6px; border-left: 3px solid var(--info); font-size: 11px; margin-bottom: 5px; line-height: 1.4; color: var(--dark);}
         .ewallet-instructions b { color: var(--info); }
-
         .track-card { background: var(--white); border: 2px solid var(--light); border-radius: 10px; padding: 15px; margin-bottom: 15px;}
         .track-card.history { border-color: #eee; opacity: 0.8; }
         .track-head { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; margin-bottom: 10px; border-bottom: 1px dashed #eee; padding-bottom: 8px;}
@@ -98,31 +87,25 @@
         .status-badge.ONTHEWAY { background: var(--info); }
         .status-badge.DELIVERED { background: var(--success); }
         .history-title { font-size: 14px; font-weight: 800; margin: 20px 0 10px 0; border-bottom: 2px solid var(--light); padding-bottom: 5px;}
-
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; display: none; }
         .overlay.open { display: block; }
         .degz-copyright { text-align: center; font-size: 11px; color: var(--gray); padding: 20px; font-weight: 600; letter-spacing: 0.5px; }
         .degz-copyright span { color: var(--primary); font-weight: 800; }
-        
         @media (max-width: 400px) { .app-brand { font-size: 14px; } .user-greeting { font-size: 12px; } .product-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); } .cart-drawer { width: 85%; } }
     </style>
 </head>
 <body>
-
     <div class="cloud-status">☁️ CLOUD SYNC ACTIVE</div>
-
     <div id="auth-screen">
         <div class="auth-box">
             <div class="auth-logo" id="auth-brand">🛒 Store Name</div>
             <div class="auth-subtitle">Log in to view our products.</div>
-            
             <div id="login-form">
                 <input type="text" id="log-phone" class="auth-input" placeholder="Mobile Number (e.g. 09123456789)">
                 <input type="password" id="log-pass" class="auth-input" placeholder="Password / PIN">
                 <button class="auth-btn" onclick="login()">LOG IN</button>
                 <div class="auth-switch" onclick="toggleAuth('register')">New customer? <span>Create an account</span></div>
             </div>
-
             <div id="register-form" style="display: none;">
                 <input type="text" id="reg-name" class="auth-input" placeholder="Buong Pangalan (Full Name)">
                 <input type="text" id="reg-phone" class="auth-input" placeholder="Mobile Number">
@@ -152,7 +135,6 @@
                 <div class="cart-icon" onclick="toggleCart()">🛍️<span class="cart-badge" id="cart-count">0</span></div>
             </div>
         </div>
-
         <div class="hero">
             <h2 style="margin:0; font-size:16px;">What do you need today?</h2>
             <input type="text" class="search-bar" id="searchInput" placeholder="Search products..." onkeyup="filterProducts()">
@@ -218,84 +200,31 @@
         function logout() { localStorage.removeItem('degz_session'); location.reload(); }
 
         let inventory = []; let categories = ["All"]; let cart = []; let activeCategory = "All"; let currentDiscount = 0; 
-
-        // 🔥 SMART RENDERER PARA SA IMAGES O EMOJI
-        function getIconHtml(iconVal) {
-            if(!iconVal) return '🛍️';
-            if(iconVal.startsWith('http') || iconVal.startsWith('./') || iconVal.startsWith('/')) {
-                return `<img src="${iconVal}">`;
-            }
-            return iconVal;
-        }
-
+        function getIconHtml(iconVal) { if(!iconVal) return '🛍️'; if(iconVal.startsWith('http') || iconVal.startsWith('./') || iconVal.startsWith('/')) { return `<img src="${iconVal}">`; } return iconVal; }
         function initApp() { updateStoreBranding(); inventory = JSON.parse(localStorage.getItem('dg_inv') || '[]'); if(inventory.length > 0) { let uniqueCats = [...new Set(inventory.map(i => i.cat ? i.cat : 'Others'))]; categories = ["All", ...uniqueCats]; } else { categories = []; } renderCategories(); renderProducts(); checkMyOrders(); }
         function renderCategories() { let html = ''; categories.forEach(cat => { let isActive = cat === activeCategory ? 'active' : ''; html += `<button class="cat-btn ${isActive}" onclick="setCategory('${cat}')">${cat}</button>`; }); document.getElementById('category-list').innerHTML = html; }
         function setCategory(cat) { activeCategory = cat; renderCategories(); renderProducts(); }
         function filterProducts() { renderProducts(document.getElementById('searchInput').value); }
-
-        function renderProducts(searchQuery = '') {
-            let html = '';
-            if(inventory.length === 0) { html = `<div class="empty-state"><i>📦</i>Wala pang paninda.<br>Hinihintay pa ang Admin.</div>`; } 
-            else {
-                let filtered = inventory.filter(p => { let safeCat = p.cat ? p.cat : 'Others'; let matchCat = activeCategory === "All" || safeCat === activeCategory; let matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()); return matchCat && matchSearch; });
-                if(filtered.length === 0) { html = `<div class="empty-state">No products found.</div>`; } 
-                else { 
-                    filtered.forEach(p => { 
-                        // 🔥 USE SMART RENDERER HERE
-                        html += `<div class="product-card"><div><div class="p-icon">${getIconHtml(p.icon)}</div><div class="p-name">${p.name}</div></div><div><div class="p-price">₱${Number(p.price).toFixed(2)}</div><button class="add-btn" onclick="addToCart('${p.id}')">+ ADD</button></div></div>`; 
-                    }); 
-                }
-            }
-            document.getElementById('product-list').innerHTML = html;
-        }
-
+        function renderProducts(searchQuery = '') { let html = ''; if(inventory.length === 0) { html = `<div class="empty-state"><i>📦</i>Wala pang paninda.<br>Hinihintay pa ang Admin.</div>`; } else { let filtered = inventory.filter(p => { let safeCat = p.cat ? p.cat : 'Others'; let matchCat = activeCategory === "All" || safeCat === activeCategory; let matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()); return matchCat && matchSearch; }); if(filtered.length === 0) { html = `<div class="empty-state">No products found.</div>`; } else { filtered.forEach(p => { html += `<div class="product-card"><div><div class="p-icon">${getIconHtml(p.icon)}</div><div class="p-name">${p.name}</div></div><div><div class="p-price">₱${Number(p.price).toFixed(2)}</div><button class="add-btn" onclick="addToCart('${p.id}')">+ ADD</button></div></div>`; }); } } document.getElementById('product-list').innerHTML = html; }
         function addToCart(id) { let item = inventory.find(i => String(i.id) === String(id)); if(!item || item.stock <= 0) return alert("Out of stock!"); let existing = cart.find(i => String(i.id) === String(id)); if(existing) { if(existing.qty >= item.stock) return alert("Max stock reached!"); existing.qty++; } else { cart.push({ ...item, qty: 1 }); } updateCartUI(); }
         function updateQty(id, change) { let cartItem = cart.find(i => String(i.id) === String(id)); let invItem = inventory.find(i => String(i.id) === String(id)); if(cartItem) { if(change > 0 && cartItem.qty >= invItem.stock) return alert("Max stock reached!"); cartItem.qty += change; if(cartItem.qty <= 0) cart = cart.filter(i => String(i.id) !== String(id)); updateCartUI(); } }
-
-        function updateCartUI() {
-            let count = cart.reduce((sum, item) => sum + item.qty, 0); document.getElementById('cart-count').innerText = count; let html = ''; let subTotal = 0;
-            if(cart.length === 0) { html = `<div style="text-align:center; margin-top:50px; color:#a4b0be;">Your basket is empty.</div>`; document.getElementById('cartFooter').style.display = 'none'; currentDiscount = 0; document.getElementById('promo-input').value = ''; } 
-            else { 
-                document.getElementById('cartFooter').style.display = 'block'; 
-                cart.forEach(item => { 
-                    subTotal += item.price * item.qty; 
-                    // 🔥 USE SMART RENDERER HERE
-                    html += `<div class="c-item"><div class="c-info"><div style="width:30px; height:30px; font-size:24px; display:flex; align-items:center; justify-content:center;">${getIconHtml(item.icon)}</div><div><div style="font-size:12px; font-weight:600">${item.name}</div><div style="color:var(--primary); font-weight:800; font-size:12px;">₱${Number(item.price).toFixed(2)}</div></div></div><div class="c-qty-controls"><button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button></div></div>`; 
-                }); 
-            }
-            document.getElementById('cartItems').innerHTML = html; let finalTotal = subTotal - currentDiscount; if(finalTotal < 0) finalTotal = 0;
-            document.getElementById('cartTotal').innerText = finalTotal.toFixed(2); document.getElementById('discount-amount').innerText = currentDiscount.toFixed(2); document.getElementById('discount-row').style.display = currentDiscount > 0 ? 'flex' : 'none';
-        }
-
+        function updateCartUI() { let count = cart.reduce((sum, item) => sum + item.qty, 0); document.getElementById('cart-count').innerText = count; let html = ''; let subTotal = 0; if(cart.length === 0) { html = `<div style="text-align:center; margin-top:50px; color:#a4b0be;">Your basket is empty.</div>`; document.getElementById('cartFooter').style.display = 'none'; currentDiscount = 0; document.getElementById('promo-input').value = ''; } else { document.getElementById('cartFooter').style.display = 'block'; cart.forEach(item => { subTotal += item.price * item.qty; html += `<div class="c-item"><div class="c-info"><div style="width:30px; height:30px; font-size:24px; display:flex; align-items:center; justify-content:center;">${getIconHtml(item.icon)}</div><div><div style="font-size:12px; font-weight:600">${item.name}</div><div style="color:var(--primary); font-weight:800; font-size:12px;">₱${Number(item.price).toFixed(2)}</div></div></div><div class="c-qty-controls"><button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button></div></div>`; }); } document.getElementById('cartItems').innerHTML = html; let finalTotal = subTotal - currentDiscount; if(finalTotal < 0) finalTotal = 0; document.getElementById('cartTotal').innerText = finalTotal.toFixed(2); document.getElementById('discount-amount').innerText = currentDiscount.toFixed(2); document.getElementById('discount-row').style.display = currentDiscount > 0 ? 'flex' : 'none'; }
         function applyPromo() { let code = document.getElementById('promo-input').value.toUpperCase(); let subTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0); if(subTotal === 0) return alert("Maglagay muna ng items sa cart."); if(code === "DEGZ10") { currentDiscount = subTotal * 0.10; alert("🎉 DEGZ10 Applied! You got 10% OFF."); } else if (code === "FREE50") { currentDiscount = 50; alert("🎉 FREE50 Applied! ₱50 has been deducted."); } else { currentDiscount = 0; alert("❌ Invalid Promo Code."); } updateCartUI(); }
         function togglePaymentRef() { let method = document.getElementById('payment-method').value; let refInput = document.getElementById('payment-ref'); let instructions = document.getElementById('payment-instructions'); let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); if(method === "COD") { refInput.style.display = "none"; refInput.value = ""; instructions.style.display = "none"; } else { refInput.style.display = "block"; instructions.style.display = "block"; if(method === "GCASH") { let name = settings.gcashName || 'Not Set'; let num = settings.gcashNum || 'Not Set'; instructions.innerHTML = `<b>GCash payment to:</b><br/>Name: ${name}<br/>Number: ${num}`; } else if (method === "MAYA") { let name = settings.mayaName || 'Not Set'; let num = settings.mayaNum || 'Not Set'; instructions.innerHTML = `<b>PayMaya payment to:</b><br/>Name: ${name}<br/>Number: ${num}`; } } }
         function toggleCart() { document.getElementById('trackerDrawer').classList.remove('open'); document.getElementById('cartDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
-
-        function submitOrder() {
-            if(cart.length === 0) return; let canCheckout = true; cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(!dbItem || dbItem.stock < cItem.qty) canCheckout = false; }); if(!canCheckout) return alert("Some items are out of stock. Please check basket.");
-            let method = document.getElementById('payment-method').value; let refNo = document.getElementById('payment-ref').value; if(method !== "COD" && refNo.trim() === "") return alert("Please enter your e-Wallet Reference Number.");
-            let finalTotal = document.getElementById('cartTotal').innerText;
-            let orderPayload = { orderId: "ORD-" + Math.floor(Math.random() * 9999), customerId: currentUser.id, customerName: currentUser.name, customerPhone: currentUser.phone, storeName: currentUser.storeName, location: currentUser.address, landmark: currentUser.landmark, totalAmount: finalTotal, discount: currentDiscount, paymentMethod: method, paymentRef: refNo, items: cart, status: "PENDING", timestamp: new Date().toISOString() };
-            cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory));
-            let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); existingOrders.push(orderPayload); localStorage.setItem('dg_ord', JSON.stringify(existingOrders));
-            cart = []; currentDiscount = 0; document.getElementById('promo-input').value = ''; document.getElementById('payment-method').value = "COD"; togglePaymentRef(); updateCartUI(); closeAll(); initApp(); 
-            syncToCloud(); alert(`✅ Order Sent!\nMode of Payment: ${method}\nTotal: ₱${finalTotal}`);
-        }
-
-        function checkMyOrders() {
-            if(!currentUser) return; let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let myOrders = orders.filter(o => o.customerId === currentUser.id).reverse(); let activeOrders = myOrders.filter(o => o.status !== "DELIVERED"); let pastOrders = myOrders.filter(o => o.status === "DELIVERED"); document.getElementById('track-count').innerText = activeOrders.length; let html = '';
-            if(activeOrders.length > 0) { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); let displayMsg = "Awaiting store confirmation."; if(o.status === "PROCESSING") displayMsg = "Your items are being packed."; if(o.status === "ON THE WAY") displayMsg = "🛵 Rider is on the way to your location!"; html += `<div class="track-card"><div class="track-head"><span style="color:var(--primary)">${o.orderId}</span><span class="status-badge ${badgeClass}">${o.status}</span></div><div style="font-size:11px; margin-bottom:5px; color:#555;">${displayMsg}</div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleString()}</div><div style="font-size:10px; margin-top:5px; border-top:1px dashed #eee; padding-top:5px;">Payment: <b style="color:var(--dark)">${o.paymentMethod || 'COD'}</b></div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px;">TOTAL: ₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); } else { html += `<div style="text-align:center; color:#a4b0be; margin-bottom: 20px;">No active orders right now.</div>`; }
-            if(pastOrders.length > 0) { html += `<div class="history-title">🕰️ Order History</div>`; pastOrders.forEach(o => { let itemsPreview = o.items.map(i => i.name).join(', '); if(itemsPreview.length > 30) itemsPreview = itemsPreview.substring(0, 30) + "..."; html += `<div class="track-card history"><div class="track-head"><span style="color:var(--gray)">${o.orderId}</span><span class="status-badge DELIVERED">DELIVERED</span></div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleDateString()}</div><div style="font-size:11px; color:#555; margin-top:5px;">${itemsPreview}</div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px; color:var(--gray)">₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); }
-            document.getElementById('trackerItems').innerHTML = html;
-        }
-
+        function submitOrder() { if(cart.length === 0) return; let canCheckout = true; cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(!dbItem || dbItem.stock < cItem.qty) canCheckout = false; }); if(!canCheckout) return alert("Some items are out of stock. Please check basket."); let method = document.getElementById('payment-method').value; let refNo = document.getElementById('payment-ref').value; if(method !== "COD" && refNo.trim() === "") return alert("Please enter your e-Wallet Reference Number."); let finalTotal = document.getElementById('cartTotal').innerText; let orderPayload = { orderId: "ORD-" + Math.floor(Math.random() * 9999), customerId: currentUser.id, customerName: currentUser.name, customerPhone: currentUser.phone, storeName: currentUser.storeName, location: currentUser.address, landmark: currentUser.landmark, totalAmount: finalTotal, discount: currentDiscount, paymentMethod: method, paymentRef: refNo, items: cart, status: "PENDING", timestamp: new Date().toISOString() }; cart.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory)); let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); existingOrders.push(orderPayload); localStorage.setItem('dg_ord', JSON.stringify(existingOrders)); cart = []; currentDiscount = 0; document.getElementById('promo-input').value = ''; document.getElementById('payment-method').value = "COD"; togglePaymentRef(); updateCartUI(); closeAll(); initApp(); syncToCloud(); alert(`✅ Order Sent!\nMode of Payment: ${method}\nTotal: ₱${finalTotal}`); }
+        function checkMyOrders() { if(!currentUser) return; let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let myOrders = orders.filter(o => o.customerId === currentUser.id).reverse(); let activeOrders = myOrders.filter(o => o.status !== "DELIVERED"); let pastOrders = myOrders.filter(o => o.status === "DELIVERED"); document.getElementById('track-count').innerText = activeOrders.length; let html = ''; if(activeOrders.length > 0) { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); let displayMsg = "Awaiting store confirmation."; if(o.status === "PROCESSING") displayMsg = "Your items are being packed."; if(o.status === "ON THE WAY") displayMsg = "🛵 Rider is on the way to your location!"; html += `<div class="track-card"><div class="track-head"><span style="color:var(--primary)">${o.orderId}</span><span class="status-badge ${badgeClass}">${o.status}</span></div><div style="font-size:11px; margin-bottom:5px; color:#555;">${displayMsg}</div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleString()}</div><div style="font-size:10px; margin-top:5px; border-top:1px dashed #eee; padding-top:5px;">Payment: <b style="color:var(--dark)">${o.paymentMethod || 'COD'}</b></div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px;">TOTAL: ₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); } else { html += `<div style="text-align:center; color:#a4b0be; margin-bottom: 20px;">No active orders right now.</div>`; } if(pastOrders.length > 0) { html += `<div class="history-title">🕰️ Order History</div>`; pastOrders.forEach(o => { let itemsPreview = o.items.map(i => i.name).join(', '); if(itemsPreview.length > 30) itemsPreview = itemsPreview.substring(0, 30) + "..."; html += `<div class="track-card history"><div class="track-head"><span style="color:var(--gray)">${o.orderId}</span><span class="status-badge DELIVERED">DELIVERED</span></div><div style="font-size:10px; color:var(--gray)">${new Date(o.timestamp).toLocaleDateString()}</div><div style="font-size:11px; color:#555; margin-top:5px;">${itemsPreview}</div><div style="font-size:12px; font-weight:800; text-align:right; margin-top:5px; color:var(--gray)">₱${Number(o.totalAmount).toFixed(2)}</div></div>`; }); } document.getElementById('trackerItems').innerHTML = html; }
         function toggleTracker() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('trackerDrawer').classList.toggle('open'); document.getElementById('overlay').classList.toggle('open'); }
         function closeAll() { document.getElementById('cartDrawer').classList.remove('open'); document.getElementById('trackerDrawer').classList.remove('open'); document.getElementById('profileModal').classList.remove('open'); document.getElementById('overlay').classList.remove('open'); }
-
         window.addEventListener('storage', (e) => { if(e.key === 'dg_inv') initApp(); if(e.key === 'dg_ord') checkMyOrders(); if(e.key === 'dg_settings') { updateStoreBranding(); togglePaymentRef(); } });
         checkAuth();
 
-        if ('serviceWorker' in navigator) { const swCode = `const CACHE_NAME = 'degz-pulse-offline-v1'; self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(['./']))); }); self.addEventListener('fetch', e => { if(e.request.url.includes('script.google.com')) return fetch(e.request); e.respondWith(caches.match(e.request).then(res => res || fetch(e.request))); });`; const swURL = URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'})); navigator.serviceWorker.register(swURL).catch(()=>{}); }
+        // 🔥 OFFICIAL SERVICE WORKER REGISTRATION
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(() => console.log("✅ Offline App Ready"))
+            .catch(err => console.log("❌ App Install Error: ", err));
+        }
     </script>
 </body>
 </html>
