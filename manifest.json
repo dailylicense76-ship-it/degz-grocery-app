@@ -1,7 +1,7 @@
 {
   "name": "Degz Pulse Store",
   "short_name": "DegzPulse",
-  "start_url": "cashier.html",
+  "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#00b894",
