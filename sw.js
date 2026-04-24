@@ -1,4 +1,4 @@
-const CACHE_NAME = 'degz-pulse-v1';
+const CACHE_NAME = 'degz-pulse-v8.4';
 
 self.addEventListener('install', e => {
     e.waitUntil(
