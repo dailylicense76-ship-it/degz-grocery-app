@@ -167,10 +167,7 @@
             <div class="inv-section">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap:wrap; gap:10px;">
                     <div><h2 style="margin:0; font-size: 24px; color: var(--dark);">Store Inventory Status</h2></div>
-                    <div style="display: flex; gap: 10px;">
-                        <button class="btn-scan" style="padding: 12px 20px;" onclick="startCameraScanner('inv')">📷 CAMERA SCAN</button>
-                        <button class="btn-scan" style="padding: 12px 20px; background:var(--success);" onclick="openInvModal('')">➕ MANUAL ADD</button>
-                    </div>
+                    <div style="display: flex; gap: 10px;" id="inv-top-actions"></div>
                 </div>
                 <div id="inv-reader-container"><div id="inv-reader"></div><button class="close-scanner" onclick="stopCameraScanner()">✖ CLOSE SCANNER</button></div>
                 <div id="inventory-grouped-list"></div>
@@ -319,16 +316,11 @@
 
         let inventory = []; let carts = [ { id: 1, items: [] } ]; let activeCartIndex = 0; let cartCounter = 1; let shiftSales = parseFloat(localStorage.getItem('dg_shift_sales') || 0); let lastOrderCount = 0; let currentOnlineOrderId = ''; let delRates = [];
         
-        // 🔥 ADMIN SECURITY ENGINE
         let isAdminUnlocked = false; let pendingViewName = '';
         function switchView(viewName) { 
             let restrictedViews = ['dashboard', 'settings'];
             if(restrictedViews.includes(viewName) && !isAdminUnlocked) {
-                pendingViewName = viewName;
-                document.getElementById('pinModal').classList.add('open');
-                document.getElementById('admin-pin-input').value = '';
-                document.getElementById('admin-pin-input').focus();
-                return;
+                pendingViewName = viewName; document.getElementById('pinModal').classList.add('open'); document.getElementById('admin-pin-input').value = ''; document.getElementById('admin-pin-input').focus(); return;
             }
             document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active')); document.getElementById('view-' + viewName).classList.add('active'); 
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); let btn = document.getElementById('tab-' + viewName); btn.classList.add('active'); 
@@ -336,25 +328,19 @@
         }
         function closePinModal() { document.getElementById('pinModal').classList.remove('open'); }
         function verifyPin() {
-            let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}');
-            let correctPin = settings.adminPin || '1234';
-            let entered = document.getElementById('admin-pin-input').value;
+            let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); let correctPin = settings.adminPin || '1234'; let entered = document.getElementById('admin-pin-input').value;
             if(entered === correctPin) {
-                isAdminUnlocked = true;
-                closePinModal();
+                isAdminUnlocked = true; closePinModal();
                 document.getElementById('security-status').innerHTML = '🔓 ADMIN MODE <span style="font-size:9px; color:#fff; background:var(--danger); padding:2px 5px; border-radius:4px; margin-left:5px;">LOCK</span>';
-                document.getElementById('tab-dashboard').innerHTML = '📊 DASHBOARD';
-                document.getElementById('tab-settings').innerHTML = '⚙️ SETTINGS';
+                document.getElementById('tab-dashboard').innerHTML = '📊 DASHBOARD'; document.getElementById('tab-settings').innerHTML = '⚙️ SETTINGS';
                 switchView(pendingViewName);
             } else { alert("❌ Incorrect Admin PIN!"); }
         }
         function toggleAdminLock() {
             if(!isAdminUnlocked) return;
             if(confirm("I-lock ang Admin Mode at bumalik sa Staff Mode?")) {
-                isAdminUnlocked = false;
-                document.getElementById('security-status').innerHTML = '🔒 STAFF MODE';
-                document.getElementById('tab-dashboard').innerHTML = '🔒 DASHBOARD';
-                document.getElementById('tab-settings').innerHTML = '🔒 SETTINGS';
+                isAdminUnlocked = false; document.getElementById('security-status').innerHTML = '🔒 STAFF MODE';
+                document.getElementById('tab-dashboard').innerHTML = '🔒 DASHBOARD'; document.getElementById('tab-settings').innerHTML = '🔒 SETTINGS';
                 switchView('pos');
             }
         }
@@ -365,10 +351,20 @@
 
         let barcodeBuffer = ""; let barcodeTimer; 
         document.addEventListener('keypress', function(e) { if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return; if (e.key === 'Enter') { if (barcodeBuffer.length > 2) { processScannedCode(barcodeBuffer); } barcodeBuffer = ""; } else { barcodeBuffer += e.key; clearTimeout(barcodeTimer); barcodeTimer = setTimeout(() => { barcodeBuffer = ""; }, 100); } });
-        function processScannedCode(decodedText) { if (document.getElementById('view-pos').classList.contains('active')) { let item = inventory.find(i => String(i.id) === decodedText || String(i.id).slice(-4) === decodedText); if(item) addToCart(item.id); else alert("❌ Barcode not found in inventory!"); } else if (document.getElementById('view-inventory').classList.contains('active')) { openInvModal(decodedText); } }
+        function processScannedCode(decodedText) { 
+            if (document.getElementById('view-pos').classList.contains('active')) { 
+                let item = inventory.find(i => String(i.id) === decodedText || String(i.id).slice(-4) === decodedText); if(item) addToCart(item.id); else alert("❌ Barcode not found in inventory!"); 
+            } else if (document.getElementById('view-inventory').classList.contains('active')) { 
+                if(!isAdminUnlocked) return alert("🔒 Naka-lock ang Inventory sa Staff Mode. Kailangan ng Admin PIN.");
+                openInvModal(decodedText); 
+            } 
+        }
 
         let html5QrcodeScanner; let currentScanMode = 'pos'; 
-        function startCameraScanner(mode) { currentScanMode = mode; let containerId = mode === 'pos' ? 'pos-reader-container' : 'inv-reader-container'; let readerId = mode === 'pos' ? 'pos-reader' : 'inv-reader'; document.getElementById(containerId).style.display = 'block'; html5QrcodeScanner = new Html5QrcodeScanner(readerId, { fps: 10, qrbox: 250, facingMode: "environment" }); html5QrcodeScanner.render((decodedText) => { stopCameraScanner(); processScannedCode(decodedText); }); } 
+        function startCameraScanner(mode) { 
+            if(mode === 'inv' && !isAdminUnlocked) return alert("🔒 Naka-lock ang Inventory sa Staff Mode. Kailangan ng Admin PIN.");
+            currentScanMode = mode; let containerId = mode === 'pos' ? 'pos-reader-container' : 'inv-reader-container'; let readerId = mode === 'pos' ? 'pos-reader' : 'inv-reader'; document.getElementById(containerId).style.display = 'block'; html5QrcodeScanner = new Html5QrcodeScanner(readerId, { fps: 10, qrbox: 250, facingMode: "environment" }); html5QrcodeScanner.render((decodedText) => { stopCameraScanner(); processScannedCode(decodedText); }); 
+        } 
         function stopCameraScanner() { if(html5QrcodeScanner) html5QrcodeScanner.clear(); document.getElementById('pos-reader-container').style.display = 'none'; document.getElementById('inv-reader-container').style.display = 'none'; }
 
         function renderProducts(items) { let html = ''; items.forEach(p => { let noStock = p.stock <= 0 ? 'no-stock' : ''; html += `<div class="p-card ${noStock}" onclick="addToCart('${p.id}')"><div class="p-icon">${getIconHtml(p.icon)}</div><div class="p-name">${p.name}</div><div class="p-price">₱${Number(p.price).toFixed(2)}</div><div class="p-stock">Stock: ${p.stock} | ID: ${p.id.toString().slice(-4)}</div></div>`; }); document.getElementById('product-list').innerHTML = html; }
@@ -402,12 +398,42 @@
         function removeDelRate(i) { delRates.splice(i, 1); renderDelRates(); }
         function renderDelRates() { let html = ''; delRates.forEach((r,i) => { html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #ccc; padding-bottom:5px;"><span>📍 ${r.area}</span><span>₱${r.fee.toFixed(2)} <b style="color:var(--danger); cursor:pointer; margin-left:10px;" onclick="removeDelRate(${i})">✖</b></span></div>`; }); document.getElementById('del-rate-list').innerHTML = html || '<i>Walang naka-set na Delivery Fee. (Free Delivery sa lahat)</i>'; }
 
-        function renderInventoryTab() { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); if(inv.length === 0) { document.getElementById('inventory-grouped-list').innerHTML = `<div style="text-align:center; padding:50px; color:var(--gray);">No items in inventory.</div>`; return; } let grouped = {}; inv.forEach(item => { let category = item.cat || 'Uncategorized'; if(!grouped[category]) grouped[category] = []; grouped[category].push(item); }); let html = ''; for(let cat in grouped) { html += `<div class="inv-category-title">📂 ${cat}</div>`; html += `<div style="overflow-x:auto;"><table class="inv-table"><thead><tr><th>Barcode / ID</th><th>Item Details</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead><tbody>`; grouped[cat].forEach(item => { let statusHtml = ''; if(item.stock > 10) statusHtml = `<span style="color:var(--success)">🟢 Good</span>`; else if(item.stock > 0) statusHtml = `<span style="color:var(--warning)">🟠 Low Stock</span>`; else statusHtml = `<span style="color:var(--danger)">🔴 Out of Stock</span>`; html += `<tr><td style="color:var(--gray); font-family:monospace;">${item.id}</td><td><div style="display:flex; align-items:center; gap:10px;"><div style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:20px;">${getIconHtml(item.icon)}</div><b>${item.name}</b></div></td><td style="font-weight:600; color:var(--primary);">₱${Number(item.price).toFixed(2)}</td><td style="font-size:16px; font-weight:800;">${item.stock}</td><td><b>${statusHtml}</b></td><td><button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="openInvModal('${item.id}')">✏️ EDIT</button></td></tr>`; }); html += `</tbody></table></div>`; } document.getElementById('inventory-grouped-list').innerHTML = html; }
+        // 🔥 DYNAMIC INVENTORY TAB (ADMIN vs STAFF)
+        function renderInventoryTab() { 
+            let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); 
+            
+            // Render Header Buttons (Lock kung Staff Mode)
+            document.getElementById('inv-top-actions').innerHTML = isAdminUnlocked 
+                ? `<button class="btn-scan" style="padding: 12px 20px;" onclick="startCameraScanner('inv')">📷 CAMERA SCAN</button><button class="btn-scan" style="padding: 12px 20px; background:var(--success);" onclick="openInvModal('')">➕ MANUAL ADD</button>`
+                : `<div style="background:var(--danger); color:white; padding:8px 15px; border-radius:6px; font-size:12px; font-weight:bold;">🔒 ADMIN ONLY</div>`;
+
+            if(inv.length === 0) { document.getElementById('inventory-grouped-list').innerHTML = `<div style="text-align:center; padding:50px; color:var(--gray);">No items in inventory.</div>`; return; } 
+            
+            let grouped = {}; inv.forEach(item => { let category = item.cat || 'Uncategorized'; if(!grouped[category]) grouped[category] = []; grouped[category].push(item); }); 
+            let html = ''; 
+            for(let cat in grouped) { 
+                html += `<div class="inv-category-title">📂 ${cat}</div>`; 
+                html += `<div style="overflow-x:auto;"><table class="inv-table"><thead><tr><th>Barcode / ID</th><th>Item Details</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead><tbody>`; 
+                grouped[cat].forEach(item => { 
+                    let statusHtml = ''; if(item.stock > 10) statusHtml = `<span style="color:var(--success)">🟢 Good</span>`; else if(item.stock > 0) statusHtml = `<span style="color:var(--warning)">🟠 Low Stock</span>`; else statusHtml = `<span style="color:var(--danger)">🔴 Out of Stock</span>`; 
+                    // 🔥 Hide Edit Button kung Staff Mode
+                    let actionBtn = isAdminUnlocked 
+                        ? `<button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="openInvModal('${item.id}')">✏️ EDIT</button>` 
+                        : `<span style="color:var(--gray); font-size:11px; font-weight:bold;">🔒 LOCKED</span>`;
+                    
+                    html += `<tr><td style="color:var(--gray); font-family:monospace;">${item.id}</td><td><div style="display:flex; align-items:center; gap:10px;"><div style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:20px;">${getIconHtml(item.icon)}</div><b>${item.name}</b></div></td><td style="font-weight:600; color:var(--primary);">₱${Number(item.price).toFixed(2)}</td><td style="font-size:16px; font-weight:800;">${item.stock}</td><td><b>${statusHtml}</b></td><td>${actionBtn}</td></tr>`; 
+                }); 
+                html += `</tbody></table></div>`; 
+            } 
+            document.getElementById('inventory-grouped-list').innerHTML = html; 
+        }
+
         function loadCategoryDropdown() { let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); if(cats.length === 0) { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); cats = [...new Set(inv.map(i => i.cat || 'Others'))]; if(cats.length === 0) cats = ['Others', 'Staples', 'Snacks', 'Drinks']; localStorage.setItem('dg_cats', JSON.stringify(cats)); } let html = ''; cats.forEach(c => { html += `<option value="${c}">${c}</option>`; }); document.getElementById('m-inv-cat').innerHTML = html; } 
         function addNewCategory() { let newCat = prompt("Pangalan ng bagong Kategorya:"); if(!newCat || newCat.trim() === '') return; newCat = newCat.trim(); let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); if(cats.includes(newCat)) return alert("Buhay na ang kategoryang ito sa listahan!"); cats.push(newCat); localStorage.setItem('dg_cats', JSON.stringify(cats)); loadCategoryDropdown(); document.getElementById('m-inv-cat').value = newCat; syncToCloud(); alert("✅ Bagong Kategorya Added!"); } 
         function deleteCategory() { let select = document.getElementById('m-inv-cat'); let catToDelete = select.value; if(!catToDelete) return; if(catToDelete === 'Others') return alert("Bawal burahin ang 'Others'."); if(!confirm(`Sigurado kang buburahin ang "${catToDelete}"?`)) return; let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); cats = cats.filter(c => c !== catToDelete); localStorage.setItem('dg_cats', JSON.stringify(cats)); let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); inv.forEach(i => { if(i.cat === catToDelete) i.cat = 'Others'; }); localStorage.setItem('dg_inv', JSON.stringify(inv)); loadCategoryDropdown(); initApp(); syncToCloud(); alert("🗑️ Kategorya Deleted!"); }
         
         function openInvModal(barcodeOrId) { 
+            if(!isAdminUnlocked) return alert("🔒 Naka-lock ang Inventory sa Staff Mode. Kailangan ng Admin PIN."); // Double security
             loadCategoryDropdown(); let item = inventory.find(i => String(i.id) === String(barcodeOrId)); 
             if(item) { 
                 document.getElementById('m-inv-id').value = item.id; document.getElementById('m-inv-name').value = item.name; document.getElementById('m-inv-cat').value = item.cat || 'Others'; document.getElementById('m-inv-price').value = item.price; document.getElementById('m-inv-stock').value = item.stock; document.getElementById('m-inv-icon').value = item.icon || '🛍️'; document.getElementById('m-inv-id').disabled = true; document.getElementById('btn-delete-inv').style.display = 'block'; 
