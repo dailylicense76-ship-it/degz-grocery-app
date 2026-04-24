@@ -6,11 +6,9 @@
     <meta name="theme-color" content="#0984e3">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="logo.png">
     <link rel="apple-touch-icon" href="logo.png">
-
     <title>Store Hub</title>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
@@ -18,7 +16,7 @@
         :root { --primary: #0984e3; --dark: #2d3436; --light: #f5f6fa; --white: #ffffff; --success: #00b894; --danger: #d63031; --gray: #a4b0be; --warning: #fdcb6e; }
         * { box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body { margin: 0; background-color: var(--light); color: var(--dark); height: 100vh; overflow: hidden; display: flex; flex-direction: column;}
-        .cloud-status { background: #00b894; color: white; text-align: center; font-size: 10px; font-weight: 800; padding: 3px; letter-spacing: 1px; }
+        .cloud-status { background: #00b894; color: white; text-align: center; font-size: 10px; font-weight: 800; padding: 3px; letter-spacing: 1px; display:flex; justify-content:space-between; padding:4px 15px;}
         .top-nav { background: var(--dark); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 100; flex-wrap: wrap; gap:10px;}
         .brand { font-size: 18px; font-weight: 800; color: var(--primary); letter-spacing: 1px;}
         .nav-tabs { display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none;}
@@ -115,15 +113,18 @@
     </style>
 </head>
 <body>
-    <div class="cloud-status">☁️ CLOUD SYNC ACTIVE</div>
+    <div class="cloud-status">
+        <span>☁️ CLOUD SYNC ACTIVE</span>
+        <span id="security-status" style="color:var(--warning); cursor:pointer;" onclick="toggleAdminLock()">🔒 STAFF MODE</span>
+    </div>
     <div class="top-nav">
         <div class="brand" id="hub-brand">🏪 STORE HUB</div>
         <div class="nav-tabs">
             <button class="tab-btn active" id="tab-pos" onclick="switchView('pos')">🛒 POS</button>
             <button class="tab-btn" id="tab-online" onclick="switchView('online')">🛵 ONLINE <span class="badge" id="online-count">0</span></button>
             <button class="tab-btn" id="tab-inventory" onclick="switchView('inventory')">📦 INVENTORY</button>
-            <button class="tab-btn" id="tab-dashboard" onclick="switchView('dashboard')">📊 DASHBOARD</button>
-            <button class="tab-btn" id="tab-settings" onclick="switchView('settings')">⚙️ SETTINGS</button>
+            <button class="tab-btn" id="tab-dashboard" onclick="switchView('dashboard')">🔒 DASHBOARD</button>
+            <button class="tab-btn" id="tab-settings" onclick="switchView('settings')">🔒 SETTINGS</button>
         </div>
     </div>
     <div class="workspace">
@@ -209,12 +210,24 @@
             <div class="inv-section">
                 <h2 style="margin:0; font-size: 24px; color: var(--dark);">Store Configurations</h2>
                 <p style="margin:0; color: var(--gray); font-size: 13px; margin-bottom:20px;">I-setup ang Store Profile at E-Wallet numbers para sa online payments at resibo.</p>
-                <div style="background:var(--white); padding:30px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); max-width:500px;">
+                <div style="background:var(--white); padding:30px; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); max-width:600px;">
+                    <h3 style="margin-top:0; color:var(--danger); border-bottom:1px solid #eee; padding-bottom:10px;">🔒 Security Settings</h3>
+                    <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Admin Access PIN:</label>
+                    <input type="password" id="set-admin-pin" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px; letter-spacing: 3px;" placeholder="Default: 1234">
+
                     <h3 style="margin-top:0; color:var(--dark); border-bottom:1px solid #eee; padding-bottom:10px;">🏪 Store Information</h3>
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Store Name:</label><input type="text" id="set-store-name" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. Degz Grocery">
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Complete Address:</label><input type="text" id="set-store-address" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. 123 Main St., Manila">
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Contact Number:</label><input type="text" id="set-store-phone" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. 09123456789">
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">VAT Reg TIN (Optional):</label><input type="text" id="set-store-vat" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px;" placeholder="e.g. 123-456-789">
+                    <h3 style="margin-top:0; color:var(--warning); border-bottom:1px solid #eee; padding-bottom:10px;">🛵 Delivery Fee Settings (Location-Based)</h3>
+                    <p style="font-size: 11px; color: var(--gray); margin-bottom: 10px;">Magdagdag ng keyword sa address (hal: "Makati") at ang presyo ng delivery.</p>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="text" id="set-del-area" class="payment-input" style="font-size:14px; padding:10px; margin:0; flex:2;" placeholder="Keyword (e.g. Brgy Uno)">
+                        <input type="number" id="set-del-fee" class="payment-input" style="font-size:14px; padding:10px; margin:0; flex:1;" placeholder="Fee (₱)">
+                        <button class="btn-action" style="background:var(--warning); color:var(--dark); padding:0 15px;" onclick="addDelRate()">➕ ADD</button>
+                    </div>
+                    <div id="del-rate-list" style="margin-bottom:30px; font-size:13px; background:#f8f9fa; padding:15px; border-radius:6px; border:1px solid #eee;"></div>
                     <h3 style="margin-top:0; color:var(--info); border-bottom:1px solid #eee; padding-bottom:10px;">GCash Details</h3>
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">Registered Name:</label><input type="text" id="set-gcash-name" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 10px;" placeholder="e.g. Juan Dela Cruz">
                     <label style="font-size: 12px; font-weight: bold; color: var(--gray);">GCash Number:</label><input type="text" id="set-gcash-num" class="payment-input" style="font-size:14px; text-align:left; padding: 12px; margin-bottom: 30px;" placeholder="e.g. 09123456789">
@@ -227,6 +240,19 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="pinModal">
+        <div class="order-modal" style="max-width:350px; text-align:center; padding:30px;">
+            <div style="font-size:40px; margin-bottom:10px;">🔒</div>
+            <h3 style="margin-top:0; color:var(--dark);">Admin Access Required</h3>
+            <p style="font-size:12px; color:var(--gray); margin-bottom:20px;">I-type ang Admin PIN para mabuksan ang feature na ito. (Default: 1234)</p>
+            <input type="password" id="admin-pin-input" class="payment-input" style="text-align:center; letter-spacing: 5px; font-size:24px;" placeholder="****" maxlength="6">
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn-action" style="background:var(--gray);" onclick="closePinModal()">CANCEL</button>
+                <button class="btn-action btn-dispatch" onclick="verifyPin()">UNLOCK</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="orderModal">
         <div class="order-modal">
             <div class="modal-header">
@@ -235,7 +261,12 @@
             </div>
             <div class="modal-body">
                 <div class="m-detail-group"><h4>Customer Details</h4><div class="o-cust">Name: <span id="m-name"></span></div><div class="o-cust">Phone: <span id="m-phone"></span></div><div class="o-cust">Address: <span id="m-address"></span></div><div class="o-cust" style="margin-top:10px; padding-top:5px; border-top:1px dashed #ccc;">Payment: <b style="color:var(--primary)" id="m-payment"></b></div><div class="o-cust">Ref No: <span id="m-ref"></span></div></div>
-                <div class="m-detail-group"><h4>Items to Pack</h4><div class="o-items" id="m-items"></div><div style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px; color:var(--danger); font-weight:bold;"><span>Discount:</span><span>-₱<span id="m-discount">0.00</span></span></div><div class="o-total">TOTAL: ₱<span id="m-total">0.00</span></div></div>
+                <div class="m-detail-group">
+                    <h4>Items to Pack</h4><div class="o-items" id="m-items"></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:12px; color:var(--danger); font-weight:bold;"><span>Discount:</span><span>-₱<span id="m-discount">0.00</span></span></div>
+                    <div style="display:flex; justify-content:space-between; margin-top:5px; font-size:12px; color:var(--dark); font-weight:bold;"><span>Delivery Fee:</span><span>+₱<span id="m-delfee">0.00</span></span></div>
+                    <div class="o-total">TOTAL: ₱<span id="m-total">0.00</span></div>
+                </div>
             </div>
             <div class="modal-footer" id="m-action-footer"></div>
         </div>
@@ -271,6 +302,7 @@
         <div id="receipt-date"></div><div id="receipt-order-id"></div><div class="r-line"></div>
         <div class="r-item r-bold"><span>ITEM</span><span>AMT</span></div><div id="receipt-items"></div>
         <div id="receipt-discount-row" class="r-item" style="display:none; margin-top:5px;"><span>DISCOUNT:</span><span id="receipt-discount"></span></div>
+        <div id="receipt-delfee-row" class="r-item" style="display:none;"><span>DELIVERY FEE:</span><span id="receipt-delfee"></span></div>
         <div class="r-line"></div>
         <div class="r-item r-bold" style="font-size: 14px;"><span>TOTAL:</span><span id="receipt-total"></span></div>
         <div class="r-item"><span>PAYMENT:</span><span id="receipt-payment-method"></span></div>
@@ -281,16 +313,54 @@
 
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbwTMK_DCtNzHYGjn3Pkconli62fbjU8z9wADSfeuSDS8reG-VDaumBcIa_qg1-NN7FK/exec";
-
         function syncToCloud() { let payload = { inv: JSON.parse(localStorage.getItem('dg_inv') || '[]'), ord: JSON.parse(localStorage.getItem('dg_ord') || '[]'), settings: JSON.parse(localStorage.getItem('dg_settings') || '{}'), cats: JSON.parse(localStorage.getItem('dg_cats') || '[]'), exp: JSON.parse(localStorage.getItem('dg_exp') || '[]') }; fetch(CLOUD_URL, { method: 'POST', body: JSON.stringify({ action: "SYNC_UP", payload: payload }) }).catch(err => console.log("Cloud Sync Error:", err)); }
         function syncFromCloud() { fetch(CLOUD_URL).then(res => res.json()).then(data => { let currentOrd = localStorage.getItem('dg_ord'); if(data.inv) localStorage.setItem('dg_inv', JSON.stringify(data.inv)); if(data.ord) localStorage.setItem('dg_ord', JSON.stringify(data.ord)); if(data.settings) localStorage.setItem('dg_settings', JSON.stringify(data.settings)); if(data.cats) localStorage.setItem('dg_cats', JSON.stringify(data.cats)); if(data.exp) localStorage.setItem('dg_exp', JSON.stringify(data.exp)); if(currentOrd !== JSON.stringify(data.ord)) { checkOnlineOrders(); } if(document.getElementById('view-dashboard').classList.contains('active')) renderDashboard(); }).catch(err => console.log("Cloud Load Error:", err)); }
         setInterval(syncFromCloud, 4000); 
 
-        let inventory = []; let carts = [ { id: 1, items: [] } ]; let activeCartIndex = 0; let cartCounter = 1; let shiftSales = parseFloat(localStorage.getItem('dg_shift_sales') || 0); let lastOrderCount = 0; let currentOnlineOrderId = ''; 
-        function getIconHtml(iconVal) { if(!iconVal) return '🛍️'; if(iconVal.startsWith('http') || iconVal.startsWith('./') || iconVal.startsWith('/')) { return `<img src="${iconVal}">`; } return iconVal; }
+        let inventory = []; let carts = [ { id: 1, items: [] } ]; let activeCartIndex = 0; let cartCounter = 1; let shiftSales = parseFloat(localStorage.getItem('dg_shift_sales') || 0); let lastOrderCount = 0; let currentOnlineOrderId = ''; let delRates = [];
+        
+        // 🔥 ADMIN SECURITY ENGINE
+        let isAdminUnlocked = false; let pendingViewName = '';
+        function switchView(viewName) { 
+            let restrictedViews = ['dashboard', 'settings'];
+            if(restrictedViews.includes(viewName) && !isAdminUnlocked) {
+                pendingViewName = viewName;
+                document.getElementById('pinModal').classList.add('open');
+                document.getElementById('admin-pin-input').value = '';
+                document.getElementById('admin-pin-input').focus();
+                return;
+            }
+            document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active')); document.getElementById('view-' + viewName).classList.add('active'); 
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); let btn = document.getElementById('tab-' + viewName); btn.classList.add('active'); 
+            if(viewName === 'online') btn.classList.remove('alert'); if(viewName === 'inventory') renderInventoryTab(); if(viewName === 'dashboard') renderDashboard(); if(viewName === 'settings') loadStoreSettings(); 
+        }
+        function closePinModal() { document.getElementById('pinModal').classList.remove('open'); }
+        function verifyPin() {
+            let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}');
+            let correctPin = settings.adminPin || '1234';
+            let entered = document.getElementById('admin-pin-input').value;
+            if(entered === correctPin) {
+                isAdminUnlocked = true;
+                closePinModal();
+                document.getElementById('security-status').innerHTML = '🔓 ADMIN MODE <span style="font-size:9px; color:#fff; background:var(--danger); padding:2px 5px; border-radius:4px; margin-left:5px;">LOCK</span>';
+                document.getElementById('tab-dashboard').innerHTML = '📊 DASHBOARD';
+                document.getElementById('tab-settings').innerHTML = '⚙️ SETTINGS';
+                switchView(pendingViewName);
+            } else { alert("❌ Incorrect Admin PIN!"); }
+        }
+        function toggleAdminLock() {
+            if(!isAdminUnlocked) return;
+            if(confirm("I-lock ang Admin Mode at bumalik sa Staff Mode?")) {
+                isAdminUnlocked = false;
+                document.getElementById('security-status').innerHTML = '🔒 STAFF MODE';
+                document.getElementById('tab-dashboard').innerHTML = '🔒 DASHBOARD';
+                document.getElementById('tab-settings').innerHTML = '🔒 SETTINGS';
+                switchView('pos');
+            }
+        }
 
+        function getIconHtml(iconVal) { if(!iconVal) return '🛍️'; if(iconVal.startsWith('http') || iconVal.startsWith('./') || iconVal.startsWith('/')) { return `<img src="${iconVal}">`; } return iconVal; }
         function updateStoreBranding() { let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); let storeName = settings.storeName || 'DEGZ PULSE'; document.getElementById('hub-brand').innerText = `🏪 ${storeName.toUpperCase()}`; document.title = storeName + " Staff Hub"; document.getElementById('receipt-store-name').innerText = storeName.toUpperCase(); document.getElementById('receipt-store-address').innerText = settings.storeAddress || 'Online & Walk-in Store'; if(settings.storeVat) { document.getElementById('receipt-store-vat').innerText = 'VAT TIN: ' + settings.storeVat; document.getElementById('receipt-store-vat').style.display = 'block'; } else { document.getElementById('receipt-store-vat').style.display = 'none'; } if(settings.storePhone) { document.getElementById('receipt-store-phone').innerText = 'Contact: ' + settings.storePhone; document.getElementById('receipt-store-phone').style.display = 'block'; } else { document.getElementById('receipt-store-phone').style.display = 'none'; } }
-        function switchView(viewName) { document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active')); document.getElementById('view-' + viewName).classList.add('active'); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); let btn = document.getElementById('tab-' + viewName); btn.classList.add('active'); if(viewName === 'online') btn.classList.remove('alert'); if(viewName === 'inventory') renderInventoryTab(); if(viewName === 'dashboard') renderDashboard(); if(viewName === 'settings') loadStoreSettings(); }
         function initApp() { updateStoreBranding(); inventory = JSON.parse(localStorage.getItem('dg_inv') || '[]'); renderProducts(inventory); renderTabs(); renderCart(); checkOnlineOrders(); renderInventoryTab(); renderDashboard(); }
 
         let barcodeBuffer = ""; let barcodeTimer; 
@@ -311,20 +381,26 @@
         function updateQty(id, change) { let activeItems = carts[activeCartIndex].items; let cartItem = activeItems.find(i => String(i.id) === String(id)); let invItem = inventory.find(i => String(i.id) === String(id)); if(cartItem) { if(change > 0 && cartItem.qty >= invItem.stock) return; cartItem.qty += change; if(cartItem.qty <= 0) carts[activeCartIndex].items = activeItems.filter(i => String(i.id) !== String(id)); renderCart(); } }
         function renderCart() { let activeItems = carts[activeCartIndex].items; let html = ''; let total = 0; if(activeItems.length === 0) { html = `<div style="text-align:center; padding: 30px; color: var(--gray);">Cart is empty.</div>`; } else { activeItems.forEach(item => { total += item.price * item.qty; html += `<div class="c-item"><div class="c-info"><div style="width:30px; height:30px; font-size:24px; display:flex; align-items:center; justify-content:center;">${getIconHtml(item.icon)}</div><div><div style="font-size:12px; font-weight:600">${item.name}</div><div style="color:var(--primary); font-weight:800; font-size:12px;">₱${Number(item.price).toFixed(2)}</div></div></div><div class="c-qty-controls"><button class="qty-btn" onclick="updateQty('${item.id}', -1)">-</button><span>${item.qty}</span><button class="qty-btn" onclick="updateQty('${item.id}', 1)">+</button></div></div>`; }); } document.getElementById('cart-list').innerHTML = html; document.getElementById('cart-total').innerText = total.toFixed(2); calculateChange(); }
         function calculateChange() { let total = parseFloat(document.getElementById('cart-total').innerText); let cash = parseFloat(document.getElementById('cash-tendered').value || 0); let change = cash - total; document.getElementById('cash-change').innerText = change > 0 ? change.toFixed(2) : "0.00"; }
-        function processPOS() { let activeItems = carts[activeCartIndex].items; if(activeItems.length === 0) return alert("Empty cart!"); let total = parseFloat(document.getElementById('cart-total').innerText); let cash = parseFloat(document.getElementById('cash-tendered').value || 0); if(cash < total) return alert("Kulang ang bayad!"); let orderId = "POS-" + Math.floor(Math.random() * 9999); buildReceipt(orderId, activeItems, total, cash, cash - total, 0, "CASH", cash.toFixed(2)); window.print(); activeItems.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory)); let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); existingOrders.push({ orderId: orderId, customerName: "WALK-IN", customerPhone: "N/A", storeName: "STORE", location: "N/A", landmark: "N/A", totalAmount: total.toFixed(2), discount: 0, paymentMethod: "CASH", paymentRef: "N/A", items: activeItems, status: "DELIVERED", timestamp: new Date().toISOString() }); localStorage.setItem('dg_ord', JSON.stringify(existingOrders)); shiftSales += total; localStorage.setItem('dg_shift_sales', shiftSales); carts[activeCartIndex].items = []; document.getElementById('cash-tendered').value = ''; renderCart(); renderProducts(inventory); renderInventoryTab(); renderDashboard(); syncToCloud(); }
+        function processPOS() { let activeItems = carts[activeCartIndex].items; if(activeItems.length === 0) return alert("Empty cart!"); let total = parseFloat(document.getElementById('cart-total').innerText); let cash = parseFloat(document.getElementById('cash-tendered').value || 0); if(cash < total) return alert("Kulang ang bayad!"); let orderId = "POS-" + Math.floor(Math.random() * 9999); buildReceipt(orderId, activeItems, total, cash, cash - total, 0, 0, "CASH", cash.toFixed(2)); window.print(); activeItems.forEach(cItem => { let dbItem = inventory.find(i => String(i.id) === String(cItem.id)); if(dbItem) dbItem.stock -= cItem.qty; }); localStorage.setItem('dg_inv', JSON.stringify(inventory)); let existingOrders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); existingOrders.push({ orderId: orderId, customerName: "WALK-IN", customerPhone: "N/A", storeName: "STORE", location: "N/A", landmark: "N/A", totalAmount: total.toFixed(2), discount: 0, deliveryFee: 0, paymentMethod: "CASH", paymentRef: "N/A", items: activeItems, status: "DELIVERED", timestamp: new Date().toISOString() }); localStorage.setItem('dg_ord', JSON.stringify(existingOrders)); shiftSales += total; localStorage.setItem('dg_shift_sales', shiftSales); carts[activeCartIndex].items = []; document.getElementById('cash-tendered').value = ''; renderCart(); renderProducts(inventory); renderInventoryTab(); renderDashboard(); syncToCloud(); }
         function showScanAlert(itemName) { let banner = document.getElementById('scan-alert'); banner.innerText = `✅ Added: ${itemName}`; banner.style.display = 'block'; setTimeout(() => { banner.style.display = 'none'; }, 2000); }
         function generateZReading() { if(confirm(`I-end ang shift at i-reset ang kaha sa zero?\n\nIto ay magbubura sa mga listahan ng benta at expenses ngayong araw dito sa iyong screen. (Tandaan: Naka-save pa rin ang mga ito sa Cloud/Google Sheets).`)) { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let activeOrders = orders.filter(o => o.status !== "DELIVERED" && !o.orderId.startsWith('POS')); localStorage.setItem('dg_ord', JSON.stringify(activeOrders)); localStorage.setItem('dg_exp', '[]'); shiftSales = 0; localStorage.setItem('dg_shift_sales', 0); initApp(); syncToCloud(); alert("✅ Shift Ended. Kaha is reset and ready for the next shift."); } }
 
         function checkOnlineOrders() { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let activeOrders = orders.filter(o => o.status === "PENDING" || o.status === "PROCESSING" || o.status === "ON THE WAY"); let badgeCount = orders.filter(o => o.status === "PENDING" || o.status === "PROCESSING").length; document.getElementById('online-count').innerText = badgeCount; if(badgeCount > lastOrderCount) { document.getElementById('tab-online').classList.add('alert'); let sound = document.getElementById('alert-sound'); sound.play().catch(e => console.log("Audio blocked")); } lastOrderCount = badgeCount; renderOnlineBoard(activeOrders); }
-        function renderOnlineBoard(activeOrders) { let html = ''; if(activeOrders.length === 0) { html = `<div style="text-align:center; padding:50px; color:var(--gray); grid-column:1/-1;">No pending online orders right now.</div>`; } else { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); html += `<div class="order-card ${badgeClass}" onclick="openOrderModal('${o.orderId}')"><div class="o-head"><span class="o-id">${o.orderId}</span><span class="o-time">${new Date(o.timestamp).toLocaleTimeString()}</span></div><div class="o-cust">Name: <span>${o.customerName}</span></div><div class="o-cust">Phone: <span>${o.customerPhone}</span></div><div class="o-cust">Address: <span>${o.location}</span></div><div style="margin-top: 10px; font-size: 11px; text-align: center; color: var(--primary); font-weight: bold;">[ CURRENT STATUS: ${o.status} ]</div></div>`; }); } document.getElementById('online-orders-list').innerHTML = html; }
-        function openOrderModal(orderId) { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === orderId); if(!o) return; currentOnlineOrderId = orderId; document.getElementById('m-orderId').innerText = o.orderId; document.getElementById('m-name').innerText = o.customerName; document.getElementById('m-phone').innerText = o.customerPhone; document.getElementById('m-address').innerText = o.location; document.getElementById('m-payment').innerText = o.paymentMethod || 'COD'; document.getElementById('m-ref').innerText = o.paymentRef || 'N/A'; document.getElementById('m-discount').innerText = (o.discount || 0).toFixed(2); let itemsHtml = o.items.map(i => `<div><span>${i.qty}x ${i.name}</span> <span style="font-weight:bold;">₱${(i.price * i.qty).toFixed(2)}</span></div>`).join(''); document.getElementById('m-items').innerHTML = itemsHtml; document.getElementById('m-total').innerText = Number(o.totalAmount).toFixed(2); let footerHtml = ''; if(o.status === "PENDING") { footerHtml = `<button class="btn-action btn-prep" onclick="updateOrderStatus('${o.orderId}', 'PROCESSING')">⚙️ PROCESS ORDER</button>`; } else if (o.status === "PROCESSING") { footerHtml = `<button class="btn-action btn-dispatch" onclick="updateOrderStatus('${o.orderId}', 'ON THE WAY')">🛵 DISPATCH RIDER</button>`; } else if (o.status === "ON THE WAY") { footerHtml = `<button class="btn-action btn-deliver" onclick="updateOrderStatus('${o.orderId}', 'DELIVERED')">✅ MARK AS DELIVERED</button>`; } document.getElementById('m-action-footer').innerHTML = footerHtml; document.getElementById('orderModal').classList.add('open'); }
+        function renderOnlineBoard(activeOrders) { let html = ''; if(activeOrders.length === 0) { html = `<div style="text-align:center; padding:50px; color:var(--gray); grid-column:1/-1;">No pending online orders right now.</div>`; } else { activeOrders.forEach(o => { let badgeClass = o.status.replace(/\s+/g, ''); let df = o.deliveryFee > 0 ? ` | Del: ₱${o.deliveryFee}` : ''; html += `<div class="order-card ${badgeClass}" onclick="openOrderModal('${o.orderId}')"><div class="o-head"><span class="o-id">${o.orderId}</span><span class="o-time">${new Date(o.timestamp).toLocaleTimeString()}</span></div><div class="o-cust">Name: <span>${o.customerName}</span></div><div class="o-cust">Phone: <span>${o.customerPhone}</span></div><div class="o-cust">Address: <span>${o.location}</span></div><div style="font-size:10px; color:#aaa; margin-top:3px;">${o.paymentMethod}${df}</div><div style="margin-top: 10px; font-size: 11px; text-align: center; color: var(--primary); font-weight: bold;">[ CURRENT STATUS: ${o.status} ]</div></div>`; }); } document.getElementById('online-orders-list').innerHTML = html; }
+        
+        function openOrderModal(orderId) { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === orderId); if(!o) return; currentOnlineOrderId = orderId; document.getElementById('m-orderId').innerText = o.orderId; document.getElementById('m-name').innerText = o.customerName; document.getElementById('m-phone').innerText = o.customerPhone; document.getElementById('m-address').innerText = o.location; document.getElementById('m-payment').innerText = o.paymentMethod || 'COD'; document.getElementById('m-ref').innerText = o.paymentRef || 'N/A'; document.getElementById('m-discount').innerText = (o.discount || 0).toFixed(2); document.getElementById('m-delfee').innerText = (o.deliveryFee || 0).toFixed(2); let itemsHtml = o.items.map(i => `<div><span>${i.qty}x ${i.name}</span> <span style="font-weight:bold;">₱${(i.price * i.qty).toFixed(2)}</span></div>`).join(''); document.getElementById('m-items').innerHTML = itemsHtml; document.getElementById('m-total').innerText = Number(o.totalAmount).toFixed(2); let footerHtml = ''; if(o.status === "PENDING") { footerHtml = `<button class="btn-action btn-prep" onclick="updateOrderStatus('${o.orderId}', 'PROCESSING')">⚙️ PROCESS ORDER</button>`; } else if (o.status === "PROCESSING") { footerHtml = `<button class="btn-action btn-dispatch" onclick="updateOrderStatus('${o.orderId}', 'ON THE WAY')">🛵 DISPATCH RIDER</button>`; } else if (o.status === "ON THE WAY") { footerHtml = `<button class="btn-action btn-deliver" onclick="updateOrderStatus('${o.orderId}', 'DELIVERED')">✅ MARK AS DELIVERED</button>`; } document.getElementById('m-action-footer').innerHTML = footerHtml; document.getElementById('orderModal').classList.add('open'); }
         function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); }
         function updateOrderStatus(orderId, newStatus) { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let index = orders.findIndex(o => o.orderId === orderId); if(index !== -1) { orders[index].status = newStatus; localStorage.setItem('dg_ord', JSON.stringify(orders)); closeOrderModal(); checkOnlineOrders(); renderDashboard(); syncToCloud(); } }
-        function printOnlineReceipt() { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === currentOnlineOrderId); if(!o) return alert("Order not found!"); buildReceipt(o.orderId + " [ONL]", o.items, parseFloat(o.totalAmount), 0, 0, o.discount || 0, o.paymentMethod || "COD", o.paymentRef || "---"); window.print(); }
-        function buildReceipt(orderId, items, total, cash, change, discount, payMethod, payRef) { document.getElementById('receipt-date').innerText = "Date: " + new Date().toLocaleString(); document.getElementById('receipt-order-id').innerText = "Trans: " + orderId; let itemsHtml = ''; items.forEach(i => { itemsHtml += `<div>${i.name.substring(0,15)}</div><div class="r-item"><span>  ${i.qty} x ${i.price}</span><span>${(i.price * i.qty).toFixed(2)}</span></div>`; }); document.getElementById('receipt-items').innerHTML = itemsHtml; if(discount > 0) { document.getElementById('receipt-discount').innerText = "-₱" + discount.toFixed(2); document.getElementById('receipt-discount-row').style.display = "flex"; } else { document.getElementById('receipt-discount-row').style.display = "none"; } document.getElementById('receipt-total').innerText = total.toFixed(2); document.getElementById('receipt-payment-method').innerText = payMethod; document.getElementById('receipt-cash').innerText = payMethod === "CASH" ? cash.toFixed(2) : payRef; document.getElementById('receipt-change').innerText = payMethod === "CASH" ? change.toFixed(2) : "---"; }
+        function printOnlineReceipt() { let orders = JSON.parse(localStorage.getItem('dg_ord') || '[]'); let o = orders.find(ord => ord.orderId === currentOnlineOrderId); if(!o) return alert("Order not found!"); buildReceipt(o.orderId + " [ONL]", o.items, parseFloat(o.totalAmount), 0, 0, o.discount || 0, o.deliveryFee || 0, o.paymentMethod || "COD", o.paymentRef || "---"); window.print(); }
+        
+        function buildReceipt(orderId, items, total, cash, change, discount, delFee, payMethod, payRef) { document.getElementById('receipt-date').innerText = "Date: " + new Date().toLocaleString(); document.getElementById('receipt-order-id').innerText = "Trans: " + orderId; let itemsHtml = ''; items.forEach(i => { itemsHtml += `<div>${i.name.substring(0,15)}</div><div class="r-item"><span>  ${i.qty} x ${i.price}</span><span>${(i.price * i.qty).toFixed(2)}</span></div>`; }); document.getElementById('receipt-items').innerHTML = itemsHtml; if(discount > 0) { document.getElementById('receipt-discount').innerText = "-₱" + discount.toFixed(2); document.getElementById('receipt-discount-row').style.display = "flex"; } else { document.getElementById('receipt-discount-row').style.display = "none"; } if(delFee > 0) { document.getElementById('receipt-delfee').innerText = "+₱" + delFee.toFixed(2); document.getElementById('receipt-delfee-row').style.display = "flex"; } else { document.getElementById('receipt-delfee-row').style.display = "none"; } document.getElementById('receipt-total').innerText = total.toFixed(2); document.getElementById('receipt-payment-method').innerText = payMethod; document.getElementById('receipt-cash').innerText = payMethod === "CASH" ? cash.toFixed(2) : payRef; document.getElementById('receipt-change').innerText = payMethod === "CASH" ? change.toFixed(2) : "---"; }
 
-        function loadStoreSettings() { let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); document.getElementById('set-store-name').value = settings.storeName || ''; document.getElementById('set-store-address').value = settings.storeAddress || ''; document.getElementById('set-store-phone').value = settings.storePhone || ''; document.getElementById('set-store-vat').value = settings.storeVat || ''; document.getElementById('set-gcash-name').value = settings.gcashName || ''; document.getElementById('set-gcash-num').value = settings.gcashNum || ''; document.getElementById('set-maya-name').value = settings.mayaName || ''; document.getElementById('set-maya-num').value = settings.mayaNum || ''; }
-        function saveStoreSettings() { let settings = { storeName: document.getElementById('set-store-name').value.trim(), storeAddress: document.getElementById('set-store-address').value.trim(), storePhone: document.getElementById('set-store-phone').value.trim(), storeVat: document.getElementById('set-store-vat').value.trim(), gcashName: document.getElementById('set-gcash-name').value.trim(), gcashNum: document.getElementById('set-gcash-num').value.trim(), mayaName: document.getElementById('set-maya-name').value.trim(), mayaNum: document.getElementById('set-maya-num').value.trim() }; localStorage.setItem('dg_settings', JSON.stringify(settings)); updateStoreBranding(); syncToCloud(); alert("✅ Settings Saved!"); }
+        function loadStoreSettings() { let settings = JSON.parse(localStorage.getItem('dg_settings') || '{}'); document.getElementById('set-admin-pin').value = settings.adminPin || '1234'; document.getElementById('set-store-name').value = settings.storeName || ''; document.getElementById('set-store-address').value = settings.storeAddress || ''; document.getElementById('set-store-phone').value = settings.storePhone || ''; document.getElementById('set-store-vat').value = settings.storeVat || ''; document.getElementById('set-gcash-name').value = settings.gcashName || ''; document.getElementById('set-gcash-num').value = settings.gcashNum || ''; document.getElementById('set-maya-name').value = settings.mayaName || ''; document.getElementById('set-maya-num').value = settings.mayaNum || ''; delRates = settings.delRates || []; renderDelRates(); }
+        function saveStoreSettings() { let settings = { adminPin: document.getElementById('set-admin-pin').value.trim() || '1234', storeName: document.getElementById('set-store-name').value.trim(), storeAddress: document.getElementById('set-store-address').value.trim(), storePhone: document.getElementById('set-store-phone').value.trim(), storeVat: document.getElementById('set-store-vat').value.trim(), gcashName: document.getElementById('set-gcash-name').value.trim(), gcashNum: document.getElementById('set-gcash-num').value.trim(), mayaName: document.getElementById('set-maya-name').value.trim(), mayaNum: document.getElementById('set-maya-num').value.trim(), delRates: delRates }; localStorage.setItem('dg_settings', JSON.stringify(settings)); updateStoreBranding(); syncToCloud(); alert("✅ Settings Saved!"); }
+        
+        function addDelRate() { let area = document.getElementById('set-del-area').value.trim(); let fee = parseFloat(document.getElementById('set-del-fee').value); if(!area || isNaN(fee)) return alert("Pakilagay ng Keyword at Presyo."); delRates.push({area, fee}); document.getElementById('set-del-area').value=''; document.getElementById('set-del-fee').value=''; renderDelRates(); }
+        function removeDelRate(i) { delRates.splice(i, 1); renderDelRates(); }
+        function renderDelRates() { let html = ''; delRates.forEach((r,i) => { html += `<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed #ccc; padding-bottom:5px;"><span>📍 ${r.area}</span><span>₱${r.fee.toFixed(2)} <b style="color:var(--danger); cursor:pointer; margin-left:10px;" onclick="removeDelRate(${i})">✖</b></span></div>`; }); document.getElementById('del-rate-list').innerHTML = html || '<i>Walang naka-set na Delivery Fee. (Free Delivery sa lahat)</i>'; }
 
         function renderInventoryTab() { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); if(inv.length === 0) { document.getElementById('inventory-grouped-list').innerHTML = `<div style="text-align:center; padding:50px; color:var(--gray);">No items in inventory.</div>`; return; } let grouped = {}; inv.forEach(item => { let category = item.cat || 'Uncategorized'; if(!grouped[category]) grouped[category] = []; grouped[category].push(item); }); let html = ''; for(let cat in grouped) { html += `<div class="inv-category-title">📂 ${cat}</div>`; html += `<div style="overflow-x:auto;"><table class="inv-table"><thead><tr><th>Barcode / ID</th><th>Item Details</th><th>Price</th><th>Stock</th><th>Status</th><th>Action</th></tr></thead><tbody>`; grouped[cat].forEach(item => { let statusHtml = ''; if(item.stock > 10) statusHtml = `<span style="color:var(--success)">🟢 Good</span>`; else if(item.stock > 0) statusHtml = `<span style="color:var(--warning)">🟠 Low Stock</span>`; else statusHtml = `<span style="color:var(--danger)">🔴 Out of Stock</span>`; html += `<tr><td style="color:var(--gray); font-family:monospace;">${item.id}</td><td><div style="display:flex; align-items:center; gap:10px;"><div style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; font-size:20px;">${getIconHtml(item.icon)}</div><b>${item.name}</b></div></td><td style="font-weight:600; color:var(--primary);">₱${Number(item.price).toFixed(2)}</td><td style="font-size:16px; font-weight:800;">${item.stock}</td><td><b>${statusHtml}</b></td><td><button style="background:var(--primary); color:white; border:none; padding:5px 10px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="openInvModal('${item.id}')">✏️ EDIT</button></td></tr>`; }); html += `</tbody></table></div>`; } document.getElementById('inventory-grouped-list').innerHTML = html; }
         function loadCategoryDropdown() { let cats = JSON.parse(localStorage.getItem('dg_cats') || '[]'); if(cats.length === 0) { let inv = JSON.parse(localStorage.getItem('dg_inv') || '[]'); cats = [...new Set(inv.map(i => i.cat || 'Others'))]; if(cats.length === 0) cats = ['Others', 'Staples', 'Snacks', 'Drinks']; localStorage.setItem('dg_cats', JSON.stringify(cats)); } let html = ''; cats.forEach(c => { html += `<option value="${c}">${c}</option>`; }); document.getElementById('m-inv-cat').innerHTML = html; } 
@@ -361,12 +437,7 @@
         window.addEventListener('storage', (e) => { if(e.key === 'dg_inv') { initApp(); } if(e.key === 'dg_ord' || e.key === 'dg_exp' || e.key === 'dg_settings') { checkOnlineOrders(); renderDashboard(); updateStoreBranding(); } });
         initApp(); setInterval(checkOnlineOrders, 3000); 
 
-        // 🔥 OFFICIAL SERVICE WORKER REGISTRATION
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(() => console.log("✅ Offline App Ready"))
-            .catch(err => console.log("❌ App Install Error: ", err));
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js').then(() => console.log("✅ Offline App Ready")).catch(err => console.log("❌ App Install Error: ", err)); }
     </script>
 </body>
 </html>
